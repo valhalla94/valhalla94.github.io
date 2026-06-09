@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CalcolaBolo — Calcolo avanzato del bolo insulinico con formula Warsaw e FPU. Integrazione Nightscout, promemoria iniezioni, database alimentare.">
+    <meta name="theme-color" content="#0B6E4F">
+    <meta property="og:title" content="CalcolaBolo — Advanced Insulin Bolus Calculator">
+    <meta property="og:description" content="Precision bolus dosing with Warsaw Formula and Fat-Protein Units. Nightscout CGM, barcode food lookup, and smart injection reminders.">
+    <meta property="og:type" content="website">
+    <title>CalcolaBolo — Advanced Insulin Bolus Calculator</title>
+    <style>
+        :root {
+            --primary: #0B6E4F;
+            --primary-dark: #085A40;
+            --primary-light: #6FD8B0;
+            --primary-mint: #A7F3D0;
+            --secondary: #4A635A;
+            --surface: #F5FAF7;
+            --surface-card: #FFFFFF;
+            --text: #1C1B1F;
+            --text-secondary: #5A6B63;
+            --error: #B3261E;
+            --amber: #8A5A00;
+            --amber-light: #FFF3E0;
+            --radius: 20px;
+            --radius-sm: 12px;
+            --shadow: 0 4px 24px rgba(11,110,79,0.08);
+            --shadow-lg: 0 12px 48px rgba(11,110,79,0.12);
+        }
+
+        @font-face {
+            font-family: 'Inter';
+            src: url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--surface);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Navigation ── */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(11,110,79,0.10);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        nav .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .nav-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), #0D8A63);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(11,110,79,0.25);
+        }
+
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--primary); }
+
+        .nav-cta {
+            background: var(--primary);
+            color: #fff !important;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .nav-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(11,110,79,0.35);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 120px 24px 80px;
+            background: linear-gradient(170deg, #F0FAF5 0%, #E8F5EF 30%, #FFFFFF 70%);
+        }
+
+        .hero-bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.07;
+        }
+        .hero-bg-circle.c1 {
+            width: 600px; height: 600px;
+            background: var(--primary);
+            top: -200px; right: -150px;
+        }
+        .hero-bg-circle.c2 {
+            width: 400px; height: 400px;
+            background: var(--primary-light);
+            bottom: -100px; left: -100px;
+        }
+        .hero-bg-circle.c3 {
+            width: 200px; height: 200px;
+            background: var(--primary-mint);
+            top: 40%; left: 60%;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text { display: flex; flex-direction: column; gap: 28px; }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(11,110,79,0.08);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            width: fit-content;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .hero-badge .dot {
+            width: 8px; height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%,100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.4); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 3.8rem);
+            font-weight: 800;
+            line-height: 1.15;
+            color: var(--text);
+            animation: fadeInUp 0.6s ease 0.1s both;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--primary), #0D8A63);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 480px;
+            font-weight: 400;
+            animation: fadeInUp 0.6s ease 0.2s both;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.6s ease 0.3s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #0D8A63);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(11,110,79,0.3);
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: var(--primary);
+            border: 2px solid rgba(11,110,79,0.15);
+        }
+
+        .btn-outline:hover { border-color: var(--primary); background: #F5FAF7; }
+
+        /* ── Phone Mockup ── */
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .phone-mockup {
+            width: 280px;
+            height: 560px;
+            background: #1C1B1F;
+            border-radius: 40px;
+            padding: 14px;
+            box-shadow: 0 32px 80px rgba(11,110,79,0.18);
+            position: relative;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: var(--surface);
+            border-radius: 28px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 18px;
+        }
+
+        .mock-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.6rem;
+            color: #999;
+            margin-bottom: 14px;
+        }
+
+        .mock-app-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .mock-app-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), #0D8A63);
+        }
+        .mock-app-title { font-weight: 700; font-size: 0.95rem; color: var(--primary); }
+        .mock-app-sub  { font-size: 0.6rem; color: var(--text-secondary); }
+
+        .mock-field {
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            border: 1px solid #E8EDEA;
+        }
+        .mock-field-label { font-size: 0.55rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .mock-field-val  { font-size: 0.85rem; color: var(--text); font-weight: 600; margin-top: 2px; }
+
+        .mock-chips {
+            display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .mock-chip {
+            font-size: 0.6rem;
+            padding: 5px 12px;
+            border-radius: 50px;
+            background: #fff;
+            border: 1px solid #E0E6E3;
+            font-weight: 500;
+        }
+        .mock-chip.active {
+            background: var(--primary-mint);
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .mock-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, var(--primary), #0D8A63);
+            color: #fff;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        .mock-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 12px;
+            margin-top: 10px;
+            border-left: 3px solid var(--primary);
+        }
+        .mock-card .dose { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+        .mock-card .label { font-size: 0.55rem; color: var(--text-secondary); }
+
+        /* ── Sections ── */
+        section {
+            padding: 100px 24px;
+        }
+
+        .section-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 3.5vw, 2.8rem);
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .section-desc {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 650px;
+            margin-bottom: 56px;
+        }
+
+        /* ── Feature Grid ── */
+        #features { background: #fff; }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 32px 28px;
+            border: 1px solid rgba(11,110,79,0.06);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary-mint), rgba(11,110,79,0.08));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .feature-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+        .feature-card p  { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; }
+
+        /* ── How it Works ── */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 32px;
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 36px 24px;
+            position: relative;
+        }
+
+        .step-number {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #0D8A63);
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 20px rgba(11,110,79,0.25);
+        }
+
+        .step-card h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+        .step-card p  { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+
+        /* ── Safety Section ── */
+        #safety {
+            background: linear-gradient(170deg, #FFFBF5, #FFF8F0);
+        }
+
+        .safety-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .safety-card {
+            background: #fff;
+            border-radius: var(--radius-sm);
+            padding: 24px;
+            border: 1px solid #F5EAD8;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .safety-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: var(--amber-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .safety-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+        .safety-card p  { font-size: 0.83rem; color: var(--text-secondary); line-height: 1.6; }
+
+        /* ── Integration Section ── */
+        #integrations {
+            background: var(--surface);
+        }
+
+        .integrations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .integration-card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 28px;
+            border: 1px solid rgba(11,110,79,0.06);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .integration-card:hover { transform: translateY(-3px); }
+
+        .integration-logo {
+            width: 64px; height: 64px;
+            border-radius: 18px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .integration-logo.nightscout { background: linear-gradient(135deg, #1A1A2E, #16213E); }
+        .integration-logo.food     { background: linear-gradient(135deg, #F0F9F0, #E0F0E0); }
+        .integration-logo.firebase { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); }
+        .integration-logo.play     { background: linear-gradient(135deg, #E8F5F9, #B3E5FC); }
+
+        .integration-card h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+        .integration-card p  { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; }
+
+        /* ── CTA ── */
+        #download {
+            text-align: center;
+            background: linear-gradient(170deg, #0B6E4F, #085A40);
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #download::before {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            top: -80px; right: -80px;
+        }
+        #download::after {
+            content: '';
+            position: absolute;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+            bottom: -60px; left: -60px;
+        }
+
+        #download .section-label { color: var(--primary-mint); }
+        #download .section-title { color: #fff; }
+        #download .section-desc  { color: rgba(255,255,255,0.8); margin: 0 auto 48px; }
+
+        .download-options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-download {
+            background: #fff;
+            color: var(--primary);
+            font-weight: 700;
+            padding: 16px 36px;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.05rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .btn-download:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .btn-download svg { width: 24px; height: 24px; }
+
+        /* ── Disclaimer ── */
+        .disclaimer-bar {
+            background: var(--amber-light);
+            border: 1px solid rgba(138,90,0,0.12);
+            border-radius: var(--radius);
+            padding: 20px 28px;
+            margin-top: 48px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            font-size: 0.85rem;
+            color: var(--amber);
+            line-height: 1.6;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .disclaimer-bar .warn-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Footer ── */
+        footer {
+            background: #0A0A0F;
+            color: rgba(255,255,255,0.6);
+            padding: 56px 24px 32px;
+            text-align: center;
+        }
+
+        .footer-inner { max-width: 800px; margin: 0 auto; }
+
+        .footer-links {
+            display: flex;
+            gap: 28px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.88rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--primary-light); }
+
+        .footer-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 24px 0;
+        }
+
+        .footer-copy {
+            font-size: 0.82rem;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                text-align: center;
+            }
+            .hero-text { align-items: center; }
+            .hero-subtitle { margin: 0 auto; }
+            .hero-actions { justify-content: center; }
+            .hero-visual { order: -1; }
+            .phone-mockup { width: 220px; height: 440px; border-radius: 32px; }
+            .phone-screen { border-radius: 22px; padding: 14px 12px; }
+            .mock-app-icon { width: 28px; height: 28px; }
+            .mock-app-title { font-size: 0.8rem; }
+            .mock-field-val { font-size: 0.75rem; }
+            .mock-card .dose { font-size: 1.1rem; }
+            .mock-chip { font-size: 0.5rem; padding: 4px 8px; }
+            .mock-btn { font-size: 0.7rem; padding: 10px; }
+            .mock-status { font-size: 0.5rem; }
+            .mock-field-label { font-size: 0.48rem; }
+            .mock-chips { margin-bottom: 8px; }
+            .mock-field { padding: 8px 10px; margin-bottom: 6px; }
+
+            .nav-links { display: none; }
+            section { padding: 72px 20px; }
+            .features-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 2rem; }
+            .hero { padding: 100px 16px 60px; min-height: auto; }
+            .btn { padding: 12px 22px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Navigation ── -->
+    <nav>
+        <div class="nav-inner">
+            <a href="#" class="nav-brand">
+                <div class="nav-logo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2C10 2 8.5 4 8.5 6.5C8.5 9 10 11 12 13C14 11 15.5 9 15.5 6.5C15.5 4 14 2 12 2Z" fill="rgba(255,255,255,0.9)"/>
+                        <path d="M12 13C10 15 8.5 17 8.5 19.5C8.5 21.5 10 22.5 12 22.5C14 22.5 15.5 21.5 15.5 19.5C15.5 17 14 15 12 13Z" fill="rgba(167,243,208,0.8)"/>
+                    </svg>
+                </div>
+                CalcolaBolo
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#safety">Safety</a></li>
+                <li><a href="#integrations">Integrations</a></li>
+            </ul>
+            <a href="#download" class="nav-cta">Download</a>
+        </div>
+    </nav>
+
+    <!-- ── Hero ── -->
+    <section class="hero" id="hero">
+        <div class="hero-bg-circle c1"></div>
+        <div class="hero-bg-circle c2"></div>
+        <div class="hero-bg-circle c3"></div>
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-badge">
+                    <span class="dot"></span> Advanced Insulin Therapy
+                </div>
+                <h1>
+                    Precision Insulin<br>
+                    <span class="highlight">Bolus Calculator</span>
+                </h1>
+                <p class="hero-subtitle">
+                    The only open-source calculator that uses the <strong>Warsaw Formula</strong> and <strong>Fat-Protein Units (FPU)</strong>
+                    to handle complex meals. Because diabetes doesn't stop at carbs.
+                </p>
+                <div class="hero-actions">
+                    <a href="#download" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12l4 4 4-4"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
+                        Get the App
+                    </a>
+                    <a href="#features" class="btn btn-outline">
+                        Explore Features
+                    </a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <!-- Phone mockup -->
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="mock-status">9:41 &nbsp; █████ &nbsp; &nbsp; ███</div>
+                        <div class="mock-app-header">
+                            <div class="mock-app-icon"></div>
+                            <div>
+                                <div class="mock-app-title">CalcolaBolo</div>
+                                <div class="mock-app-sub">Bolus Calculator</div>
+                            </div>
+                        </div>
+                        <div class="mock-field">
+                            <div class="mock-field-label">Carbs (g)</div>
+                            <div class="mock-field-val">75</div>
+                        </div>
+                        <div class="mock-field">
+                            <div class="mock-field-label">Fat · Protein (g)</div>
+                            <div class="mock-field-val">32 · 28</div>
+                        </div>
+                        <div class="mock-field">
+                            <div class="mock-field-label">Blood Glucose</div>
+                            <div class="mock-field-val">142 mg/dL →</div>
+                        </div>
+                        <div class="mock-chips">
+                            <span class="mock-chip active">FPU 75%</span>
+                            <span class="mock-chip">Pen</span>
+                            <span class="mock-chip">60 min</span>
+                        </div>
+                        <div class="mock-btn">Calculate Bolus</div>
+                        <div class="mock-card">
+                            <div class="dose">4.5 U</div>
+                            <div class="label">Immediate bolus</div>
+                            <div style="display:flex;gap:8px;margin-top:6px;">
+                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">2.0</span><div class="label">Extended</div></div>
+                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">4</span><div class="label">Injections</div></div>
+                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">6h</span><div class="label">Duration</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Features ── -->
+    <section id="features">
+        <div class="section-inner">
+            <div class="section-label reveal">Core Features</div>
+            <h2 class="section-title reveal">Everything you need<br>for precision dosing</h2>
+            <p class="section-desc reveal">
+                CalcolaBolo goes beyond standard carb counting with clinically-grounded algorithms
+                designed for the real-world complexity of diabetes management.
+            </p>
+            <div class="features-grid">
+                <div class="feature-card reveal">
+                    <div class="feature-icon">🧬</div>
+                    <h3>Warsaw Formula &amp; FPU</h3>
+                    <p>Calculate bolus not just for carbohydrates, but also for fat and protein using the clinically-recognized Warsaw Formula. Handles the "pizza effect" — delayed glucose rise from high-fat, high-protein meals.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">📊</div>
+                    <h3>Glucose Trend Projection</h3>
+                    <p>5 CGM-style trend arrows (falling fast to rising fast) with mg/dL offsets. Combine with live glucose and IOB for informed, adaptive dosing decisions.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">⏰</div>
+                    <h3>Smart Injection Reminders</h3>
+                    <p>Exact-alarm notifications for every fractioned injection in your extended bolus plan — up to 8 hours. Pierces Do Not Disturb, with Done and Snooze actions.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">📱</div>
+                    <h3>Nightscout CGM Integration</h3>
+                    <p>Pull live glucose readings and trend data directly from your Nightscout site. One tap to fill — no manual glucose typing needed.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">📷</div>
+                    <h3>Barcode Food Scanner</h3>
+                    <p>Scan any product barcode with ML Kit and instantly get carbs, fat, and protein from the OpenFoodFacts database. No API key needed.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">🕐</div>
+                    <h3>Time-of-Day Profiles</h3>
+                    <p>Configure different insulin sensitivity factors, carb ratios, and target glucose for different hours. Your body changes — your settings should too.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">☁️</div>
+                    <h3>Cloud Sync &amp; Offline</h3>
+                    <p>Sign in with Google and sync your medical profile to Firebase. Works fully offline and syncs automatically when you're back online.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Clinician-Configurable</h3>
+                    <p>Adjustable FPU percentage, DIA, dose rounding (pen 0.5U or pump 0.1U), max bolus caps — all parameters your diabetologist can tune for you.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── How It Works ── -->
+    <section id="how-it-works">
+        <div class="section-inner">
+            <div class="section-label reveal">How It Works</div>
+            <h2 class="section-title reveal">Four steps to a<br>precise bolus plan</h2>
+            <p class="section-desc reveal">
+                From meal data to injection plan in seconds. Designed for speed and safety.
+            </p>
+            <div class="steps-grid">
+                <div class="step-card reveal">
+                    <div class="step-number">1</div>
+                    <h4>Enter Meal Data</h4>
+                    <p>Input carbs, fat, and protein — manually, from a barcode scan, or pull glucose from Nightscout CGM</p>
+                </div>
+                <div class="step-card reveal">
+                    <div class="step-number">2</div>
+                    <h4>Set Context</h4>
+                    <p>Select your glucose trend arrow, FPU percentage prescribed by your doctor, and injection method (pen or pump)</p>
+                </div>
+                <div class="step-card reveal">
+                    <div class="step-number">3</div>
+                    <h4>Calculate</h4>
+                    <p>The engine computes your immediate bolus (carbs + correction − IOB) and extended bolus plan with fractionated doses</p>
+                </div>
+                <div class="step-card reveal">
+                    <div class="step-number">4</div>
+                    <h4>Follow the Plan</h4>
+                    <p>Schedule alarms for each injection. Receive reminders even through Do Not Disturb — never miss a fractioned dose</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Safety ── -->
+    <section id="safety">
+        <div class="section-inner">
+            <div class="section-label reveal">Safety First</div>
+            <h2 class="section-title reveal">Built with clinical<br>caution in mind</h2>
+            <p class="section-desc reveal">
+                Medical calculation tools must be safe. CalcolaBolo includes multiple guardrails to help you avoid dosing errors.
+            </p>
+            <div class="safety-grid">
+                <div class="safety-card reveal">
+                    <div class="safety-icon">⚠️</div>
+                    <div>
+                        <h4>Hypo Warning</h4>
+                        <p>If blood glucose is below your safety threshold, the app recommends treating hypoglycemia with fast-acting carbs before calculating a bolus.</p>
+                    </div>
+                </div>
+                <div class="safety-card reveal">
+                    <div class="safety-icon">🛡️</div>
+                    <div>
+                        <h4>Max Bolus Cap</h4>
+                        <p>A visible warning appears when the total suggested dose exceeds your configured maximum — but never blocks you from proceeding.</p>
+                    </div>
+                </div>
+                <div class="safety-card reveal">
+                    <div class="safety-icon">💡</div>
+                    <div>
+                        <h4>Single Bolus Advice</h4>
+                        <p>When the extended portion is very small (≤2.0 U), the app recommends a single normal bolus — simpler and safer than unnecessary fractioning.</p>
+                    </div>
+                </div>
+                <div class="safety-card reveal">
+                    <div class="safety-icon">📋</div>
+                    <div>
+                        <h4>Medical Disclaimer</h4>
+                        <p>Explicit disclaimer must be accepted before first use. Designed as a decision-support tool — always consult your diabetologist.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Integrations ── -->
+    <section id="integrations">
+        <div class="section-inner">
+            <div class="section-label reveal">Integrations</div>
+            <h2 class="section-title reveal">Powered by trusted<br>open technologies</h2>
+            <p class="section-desc reveal">
+                CalcolaBolo connects to the diabetes ecosystem you already rely on.
+            </p>
+            <div class="integrations-grid">
+                <div class="integration-card reveal">
+                    <div class="integration-logo nightscout">🌙</div>
+                    <h4>Nightscout CGM</h4>
+                    <p>Connect to any Nightscout instance. Pull real-time glucose readings and trend data with optional access token support.</p>
+                </div>
+                <div class="integration-card reveal">
+                    <div class="integration-logo food">🍎</div>
+                    <h4>OpenFoodFacts</h4>
+                    <p>Free, open food database. Scan barcodes and instantly retrieve nutritional breakdown — carbs, fat, protein, and more.</p>
+                </div>
+                <div class="integration-card reveal">
+                    <div class="integration-logo firebase">☁️</div>
+                    <h4>Firebase Sync</h4>
+                    <p>Cloud backup with Firestore. Your medical profile is encrypted in transit and only accessible by your Google account.</p>
+                </div>
+                <div class="integration-card reveal">
+                    <div class="integration-logo play">🛒</div>
+                    <h4>Google Sign-In</h4>
+                    <p>Modern login with Credential Manager. One-time purchase to remove the single banner ad — no subscriptions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Download CTA ── -->
+    <section id="download">
+        <div class="section-inner">
+            <div class="section-label reveal">Get CalcolaBolo</div>
+            <h2 class="section-title reveal">Ready for precision<br>insulin therapy?</h2>
+            <p class="section-desc reveal">
+                Free to download. Ad-supported with a one-time purchase to remove ads.<br>
+                Open source. No subscriptions. No data selling.
+            </p>
+            <div class="download-options reveal">
+                <a href="https://play.google.com/store/apps/details?id=com.costa.calcolabolo" class="btn-download" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 1.6L14.8 12 3.6 22.4C2.6 21.5 2 20.2 2 19V5c0-1.2.6-2.5 1.6-3.4z"/><path d="M17.5 10.5l-2.7-2.3L3.6 1.6C4.3 1.2 5.1 1 6 1c1.1 0 2.1.4 2.9 1.1L17.5 7.5c.7.5 1.1 1.3 1.1 2.1s-.4 1.6-1.1 2.1l-3.1 2.2-2.7-2.3 2.7-2.3 3.1 2.2c.7.5 1.1 1.3 1.1 2.1s-.4 1.6-1.1 2.1l-.1.1-5.6-4.7-5.6 4.7-3.1-2.2c-.7-.5-1.1-1.3-1.1-2.1s.4-1.6 1.1-2.1l3.1-2.2 5.6 4.7 5.6-4.7z"/></svg>
+                    Google Play
+                </a>
+                <a href="https://github.com/valhalla94/CalcolaBolo" class="btn-download" target="_blank" rel="noopener" style="background:rgba(255,255,255,0.12);color:#fff;">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.137 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+                    View on GitHub
+                </a>
+            </div>
+            <div class="disclaimer-bar reveal">
+                <span class="warn-icon">⚕️</span>
+                <span>
+                    <strong>Medical Disclaimer:</strong> CalcolaBolo is a decision-support tool and does not replace professional medical advice.
+                    All calculations are estimates. Always consult your diabetologist before making changes to your insulin therapy.
+                    This app must only be used under the guidance of a qualified healthcare professional.
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Footer ── -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-links">
+                <a href="https://github.com/valhalla94/CalcolaBolo" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://play.google.com/store/apps/details?id=com.costa.calcolabolo" target="_blank" rel="noopener">Google Play</a>
+                <a href="mailto:costantinop.dev@gmail.com">Contact</a>
+                <a href="#">Privacy Policy</a>
+            </div>
+            <div class="footer-divider"></div>
+            <p class="footer-copy">
+                CalcolaBolo · Open Source under GNU General Public License v3.0<br>
+                &copy; 2025 Costantino Pistagna. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll reveal animation
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        // Navbar background on scroll
+        const nav = document.querySelector('nav');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(255,255,255,0.95)';
+                nav.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
+            } else {
+                nav.style.background = 'rgba(255,255,255,0.82)';
+                nav.style.boxShadow = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
