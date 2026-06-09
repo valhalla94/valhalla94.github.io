@@ -1,1314 +1,1648 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="CalcolaBolo — Calcolo avanzato del bolo insulinico con formula Warsaw e FPU. Integrazione Nightscout, promemoria iniezioni, database alimentare.">
-    <meta name="theme-color" content="#0B6E4F">
-    <meta property="og:title" content="CalcolaBolo — Advanced Insulin Bolus Calculator">
-    <meta property="og:description" content="Precision bolus dosing with Warsaw Formula and Fat-Protein Units. Nightscout CGM, barcode food lookup, and smart injection reminders.">
-    <meta property="og:type" content="website">
-    <title>CalcolaBolo — Calcolo Bolo Insulinico</title>
-    <style>
-        :root {
-            --primary: #0B6E4F;
-            --primary-dark: #085A40;
-            --primary-light: #6FD8B0;
-            --primary-mint: #A7F3D0;
-            --secondary: #4A635A;
-            --surface: #F5FAF7;
-            --surface-card: #FFFFFF;
-            --text: #1C1B1F;
-            --text-secondary: #5A6B63;
-            --error: #B3261E;
-            --amber: #8A5A00;
-            --amber-light: #FFF3E0;
-            --radius: 20px;
-            --radius-sm: 12px;
-            --shadow: 0 4px 24px rgba(11,110,79,0.08);
-            --shadow-lg: 0 12px 48px rgba(11,110,79,0.12);
-        }
-
-        @font-face {
-            font-family: 'Inter';
-            src: url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html {
-            scroll-behavior: smooth;
-            font-size: 16px;
-        }
-
-        body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: var(--surface);
-            color: var(--text);
-            line-height: 1.6;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ── Navigation ── */
-        nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(255,255,255,0.82);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(11,110,79,0.10);
-            z-index: 100;
-            transition: all 0.3s ease;
-        }
-
-        nav .nav-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 1.25rem;
-        }
-
-        .nav-logo {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--primary), #0D8A63);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(11,110,79,0.25);
-        }
-
-        .nav-right { display: flex; align-items: center; gap: 24px; }
-
-        .nav-links { display: flex; gap: 32px; list-style: none; }
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-        .nav-links a:hover { color: var(--primary); }
-
-        .nav-cta {
-            background: var(--primary);
-            color: #fff !important;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        .nav-cta:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(11,110,79,0.35);
-        }
-
-        /* ── Language Switcher ── */
-        .lang-switch {
-            display: flex;
-            background: rgba(11,110,79,0.06);
-            border-radius: 50px;
-            padding: 3px;
-            gap: 2px;
-        }
-
-        .lang-switch button {
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 0.78rem;
-            padding: 6px 14px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            letter-spacing: 0.3px;
-        }
-
-        .lang-switch button.active {
-            background: var(--primary);
-            color: #fff;
-        }
-
-        .lang-switch button:hover:not(.active) {
-            color: var(--primary);
-        }
-
-        /* ── Hero ── */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            padding: 120px 24px 80px;
-            background: linear-gradient(170deg, #F0FAF5 0%, #E8F5EF 30%, #FFFFFF 70%);
-        }
-
-        .hero-bg-circle {
-            position: absolute;
-            border-radius: 50%;
-            opacity: 0.07;
-        }
-        .hero-bg-circle.c1 {
-            width: 600px; height: 600px;
-            background: var(--primary);
-            top: -200px; right: -150px;
-        }
-        .hero-bg-circle.c2 {
-            width: 400px; height: 400px;
-            background: var(--primary-light);
-            bottom: -100px; left: -100px;
-        }
-        .hero-bg-circle.c3 {
-            width: 200px; height: 200px;
-            background: var(--primary-mint);
-            top: 40%; left: 60%;
-        }
-
-        .hero-content {
-            max-width: 1200px;
-            width: 100%;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 64px;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-text { display: flex; flex-direction: column; gap: 28px; }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(11,110,79,0.08);
-            color: var(--primary);
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            width: fit-content;
-            animation: fadeInUp 0.6s ease;
-        }
-
-        .hero-badge .dot {
-            width: 8px; height: 8px;
-            background: var(--primary);
-            border-radius: 50%;
-            animation: pulse-dot 2s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%,100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(1.4); }
-        }
-
-        .hero h1 {
-            font-size: clamp(2.5rem, 5vw, 3.8rem);
-            font-weight: 800;
-            line-height: 1.15;
-            color: var(--text);
-            animation: fadeInUp 0.6s ease 0.1s both;
-        }
-
-        .hero h1 .highlight {
-            background: linear-gradient(135deg, var(--primary), #0D8A63);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-subtitle {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            max-width: 520px;
-            font-weight: 400;
-            animation: fadeInUp 0.6s ease 0.2s both;
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            animation: fadeInUp 0.6s ease 0.3s both;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 14px 28px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1rem;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            white-space: nowrap;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #0D8A63);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(11,110,79,0.3);
-        }
-
-        .btn-outline {
-            background: #fff;
-            color: var(--primary);
-            border: 2px solid rgba(11,110,79,0.15);
-        }
-
-        .btn-outline:hover { border-color: var(--primary); background: #F5FAF7; }
-
-        /* ── Phone Mockup ── */
-        .hero-visual {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: fadeInUp 0.8s ease 0.2s both;
-        }
-
-        .phone-mockup {
-            width: 280px;
-            height: 560px;
-            background: #1C1B1F;
-            border-radius: 40px;
-            padding: 14px;
-            box-shadow: 0 32px 80px rgba(11,110,79,0.18);
-            position: relative;
-        }
-
-        .phone-screen {
-            width: 100%;
-            height: 100%;
-            background: var(--surface);
-            border-radius: 28px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 18px;
-        }
-
-        .mock-status {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.6rem;
-            color: #999;
-            margin-bottom: 14px;
-        }
-
-        .mock-app-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 18px;
-        }
-        .mock-app-icon {
-            width: 38px; height: 38px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--primary), #0D8A63);
-        }
-        .mock-app-title { font-weight: 700; font-size: 0.95rem; color: var(--primary); }
-        .mock-app-sub  { font-size: 0.6rem; color: var(--text-secondary); }
-
-        .mock-field {
-            background: #fff;
-            border-radius: 12px;
-            padding: 12px 14px;
-            margin-bottom: 8px;
-            border: 1px solid #E8EDEA;
-        }
-        .mock-field-label { font-size: 0.55rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .mock-field-val  { font-size: 0.85rem; color: var(--text); font-weight: 600; margin-top: 2px; }
-
-        .mock-chips {
-            display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
-        }
-        .mock-chip {
-            font-size: 0.6rem;
-            padding: 5px 12px;
-            border-radius: 50px;
-            background: #fff;
-            border: 1px solid #E0E6E3;
-            font-weight: 500;
-        }
-        .mock-chip.active {
-            background: var(--primary-mint);
-            border-color: var(--primary);
-            color: var(--primary);
-            font-weight: 700;
-        }
-
-        .mock-btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 50px;
-            background: linear-gradient(135deg, var(--primary), #0D8A63);
-            color: #fff;
-            text-align: center;
-            font-weight: 700;
-            font-size: 0.8rem;
-            margin-top: 8px;
-        }
-
-        .mock-card {
-            background: #fff;
-            border-radius: 14px;
-            padding: 12px;
-            margin-top: 10px;
-            border-left: 3px solid var(--primary);
-        }
-        .mock-card .dose { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
-        .mock-card .label { font-size: 0.55rem; color: var(--text-secondary); }
-
-        /* ── Sections ── */
-        section {
-            padding: 100px 24px;
-        }
-
-        .section-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--primary);
-            margin-bottom: 12px;
-        }
-
-        .section-title {
-            font-size: clamp(2rem, 3.5vw, 2.8rem);
-            font-weight: 800;
-            color: var(--text);
-            margin-bottom: 16px;
-            line-height: 1.2;
-        }
-
-        .section-desc {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            max-width: 650px;
-            margin-bottom: 56px;
-        }
-
-        /* ── Feature Grid ── */
-        #features { background: #fff; }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 24px;
-        }
-
-        .feature-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 32px 28px;
-            border: 1px solid rgba(11,110,79,0.06);
-            transition: transform 0.3s, box-shadow 0.3s;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow);
-        }
-
-        .feature-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, var(--primary-mint), rgba(11,110,79,0.08));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-        }
-
-        .feature-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
-        .feature-card p  { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; }
-
-        /* ── How it Works ── */
-        .steps-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 32px;
-        }
-
-        .step-card {
-            text-align: center;
-            padding: 36px 24px;
-            position: relative;
-        }
-
-        .step-number {
-            width: 56px; height: 56px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), #0D8A63);
-            color: #fff;
-            font-weight: 800;
-            font-size: 1.4rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            box-shadow: 0 4px 20px rgba(11,110,79,0.25);
-        }
-
-        .step-card h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
-        .step-card p  { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
-
-        /* ── Safety Section ── */
-        #safety {
-            background: linear-gradient(170deg, #FFFBF5, #FFF8F0);
-        }
-
-        .safety-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .safety-card {
-            background: #fff;
-            border-radius: var(--radius-sm);
-            padding: 24px;
-            border: 1px solid #F5EAD8;
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-        }
-
-        .safety-icon {
-            width: 44px; height: 44px;
-            border-radius: 12px;
-            background: var(--amber-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .safety-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
-        .safety-card p  { font-size: 0.83rem; color: var(--text-secondary); line-height: 1.6; }
-
-        /* ── Integration Section ── */
-        #integrations {
-            background: var(--surface);
-        }
-
-        .integrations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-        }
-
-        .integration-card {
-            background: #fff;
-            border-radius: var(--radius);
-            padding: 28px;
-            border: 1px solid rgba(11,110,79,0.06);
-            text-align: center;
-            transition: transform 0.3s;
-        }
-
-        .integration-card:hover { transform: translateY(-3px); }
-
-        .integration-logo {
-            width: 64px; height: 64px;
-            border-radius: 18px;
-            margin: 0 auto 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-        }
-
-        .integration-logo.nightscout { background: linear-gradient(135deg, #1A1A2E, #16213E); }
-        .integration-logo.food     { background: linear-gradient(135deg, #F0F9F0, #E0F0E0); }
-        .integration-logo.firebase { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); }
-        .integration-logo.play     { background: linear-gradient(135deg, #E8F5F9, #B3E5FC); }
-
-        .integration-card h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
-        .integration-card p  { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; }
-
-        /* ── CTA ── */
-        #download {
-            text-align: center;
-            background: linear-gradient(170deg, #0B6E4F, #085A40);
-            color: #fff;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #download::before {
-            content: '';
-            position: absolute;
-            width: 300px; height: 300px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.04);
-            top: -80px; right: -80px;
-        }
-        #download::after {
-            content: '';
-            position: absolute;
-            width: 200px; height: 200px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.03);
-            bottom: -60px; left: -60px;
-        }
-
-        #download .section-label { color: var(--primary-mint); }
-        #download .section-title { color: #fff; }
-        #download .section-desc  { color: rgba(255,255,255,0.8); margin: 0 auto 48px; }
-
-        .download-options {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn-download {
-            background: #fff;
-            color: var(--primary);
-            font-weight: 700;
-            padding: 16px 36px;
-            border-radius: 50px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 1.05rem;
-            transition: transform 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        .btn-download:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        }
-
-        .btn-download svg { width: 24px; height: 24px; }
-
-        /* ── Disclaimer ── */
-        .disclaimer-bar {
-            background: var(--amber-light);
-            border: 1px solid rgba(138,90,0,0.12);
-            border-radius: var(--radius);
-            padding: 20px 28px;
-            margin-top: 48px;
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-            font-size: 0.85rem;
-            color: var(--amber);
-            line-height: 1.6;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .disclaimer-bar .warn-icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        /* ── Footer ── */
-        footer {
-            background: #0A0A0F;
-            color: rgba(255,255,255,0.6);
-            padding: 56px 24px 32px;
-            text-align: center;
-        }
-
-        .footer-inner { max-width: 800px; margin: 0 auto; }
-
-        .footer-links {
-            display: flex;
-            gap: 28px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 24px;
-        }
-
-        .footer-links a {
-            color: rgba(255,255,255,0.5);
-            text-decoration: none;
-            font-size: 0.88rem;
-            transition: color 0.2s;
-        }
-
-        .footer-links a:hover { color: var(--primary-light); }
-
-        .footer-divider {
-            height: 1px;
-            background: rgba(255,255,255,0.08);
-            margin: 24px 0;
-        }
-
-        .footer-copy {
-            font-size: 0.82rem;
-        }
-
-        /* ── Animations ── */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.7s ease, transform 0.7s ease;
-        }
-
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 900px) {
-            .hero-content {
-                grid-template-columns: 1fr;
-                gap: 40px;
-                text-align: center;
-            }
-            .hero-text { align-items: center; }
-            .hero-subtitle { margin: 0 auto; }
-            .hero-actions { justify-content: center; }
-            .hero-visual { order: -1; }
-            .phone-mockup { width: 220px; height: 440px; border-radius: 32px; }
-            .phone-screen { border-radius: 22px; padding: 14px 12px; }
-            .mock-app-icon { width: 28px; height: 28px; }
-            .mock-app-title { font-size: 0.8rem; }
-            .mock-field-val { font-size: 0.75rem; }
-            .mock-card .dose { font-size: 1.1rem; }
-            .mock-chip { font-size: 0.5rem; padding: 4px 8px; }
-            .mock-btn { font-size: 0.7rem; padding: 10px; }
-            .mock-status { font-size: 0.5rem; }
-            .mock-field-label { font-size: 0.48rem; }
-            .mock-chips { margin-bottom: 8px; }
-            .mock-field { padding: 8px 10px; margin-bottom: 6px; }
-
-            .nav-links { display: none; }
-            section { padding: 72px 20px; }
-            .features-grid { grid-template-columns: 1fr; }
-        }
-
-        @media (max-width: 480px) {
-            .hero h1 { font-size: 2rem; }
-            .hero { padding: 100px 16px 60px; min-height: auto; }
-            .btn { padding: 12px 22px; font-size: 0.9rem; }
-            .lang-switch button { padding: 5px 10px; font-size: 0.72rem; }
-            .nav-cta { padding: 8px 14px; font-size: 0.8rem; }
-        }
-    </style>
-</head>
+<!doctype html>
+<html lang="en"><head><script data-od-sandbox-shim="">(function(){
+  function makeStore(){
+    var data = {};
+    var api = {
+      getItem: function(k){ return Object.prototype.hasOwnProperty.call(data, k) ? data[k] : null; },
+      setItem: function(k, v){ data[k] = String(v); },
+      removeItem: function(k){ delete data[k]; },
+      clear: function(){ data = {}; },
+      key: function(i){ return Object.keys(data)[i] || null; }
+    };
+    Object.defineProperty(api, 'length', { get: function(){ return Object.keys(data).length; } });
+    return api;
+  }
+  function tryShim(name){
+    var works = false;
+    try { works = !!window[name] && typeof window[name].getItem === 'function'; void window[name].length; }
+    catch (_) { works = false; }
+    if (works) return;
+    try { Object.defineProperty(window, name, { configurable: true, value: makeStore() }); }
+    catch (_) { try { window[name] = makeStore(); } catch (__) {} }
+  }
+  tryShim('localStorage');
+  tryShim('sessionStorage');
+  document.addEventListener('click', (e) => {
+    if (!e.target || !(e.target instanceof Element)) return;
+    var link = e.target.closest('a[href]');
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (href === null) return;
+    var isAnchor = href.startsWith('#') || href === '';
+    if (isAnchor) {
+      e.preventDefault();
+      if (href === '' || href === '#') {
+        window.scrollTo({ top: 0 });
+        history.replaceState(null, '', ' ');
+      } else {
+        var targetId = href.slice(1);
+        var target = targetId ? document.getElementById(targetId) : null;
+        if (target) {
+          target.scrollIntoView();
+          location.hash === href && history.replaceState(null, '', ' ');
+          location.hash = href;
+        }
+      }
+    } else if (link.getAttribute('target') === '_blank') {
+      e.preventDefault();
+      let safe = false;
+      try {
+        var url = new URL(href, location.href);
+        safe =
+          url.protocol === 'http:' ||
+          url.protocol === 'https:' ||
+          url.protocol === 'mailto:';
+      } catch (_) {}
+      safe && window.open(href, '_blank', 'noopener,noreferrer');
+    }
+  });
+})();</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CalcolaBolo — Advanced insulin bolus calculator using Warsaw Formula &amp; FPU. Accounts for carbs, fat, and protein. Open source GPL v3.0.">
+  <meta property="og:title" content="CalcolaBolo — Advanced Insulin Bolus Calculator">
+  <meta property="og:description" content="Precision insulin therapy. Warsaw Formula, FPU, CGM integration. Open source.">
+  <meta name="theme-color" content="#0B6E4F">
+  <title>CalcolaBolo — Advanced Insulin Bolus Calculator | Warsaw Formula &amp; FPU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0B6E4F;
+      --primary-light: #6FD8B0;
+      --primary-mint: #A7F3D0;
+      --secondary: #4A635A;
+      --surface: #F5FAF7;
+      --bg-card: #FFFFFF;
+      --error: #B3261E;
+      --amber: #8A5A00;
+      --amber-bg: #FFF8E1;
+      --text: #1C1B1F;
+      --text-secondary: #5A6B63;
+      --shadow-sm: 0 2px 8px rgba(11,110,79,0.08);
+      --shadow-md: 0 8px 30px rgba(11,110,79,0.10);
+      --shadow-lg: 0 20px 60px rgba(11,110,79,0.15);
+      --radius-sm: 12px;
+      --radius: 20px;
+      --radius-lg: 28px;
+      --radius-pill: 9999px;
+      --transition: 0.3s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--surface);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ============================== NAVBAR ============================== */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      padding: 16px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(245,250,247,0.75);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(11,110,79,0.08);
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+    .navbar.scrolled {
+      background: rgba(245,250,247,0.94);
+      box-shadow: 0 2px 20px rgba(11,110,79,0.10);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--primary);
+      letter-spacing: -0.01em;
+    }
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color var(--transition);
+    }
+    .nav-links a:hover { color: var(--primary); }
+
+    /* ============================== LANGUAGE SWITCHER ============================== */
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin-left: 20px;
+      padding-left: 20px;
+      border-left: 1px solid rgba(11,110,79,0.12);
+    }
+    .lang-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--secondary);
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: color var(--transition), background var(--transition);
+      letter-spacing: 0.04em;
+    }
+    .lang-btn:hover { color: var(--primary); background: rgba(11,110,79,0.06); }
+    .lang-btn.active {
+      color: var(--primary);
+      background: rgba(11,110,79,0.10);
+      font-weight: 700;
+    }
+    .lang-sep {
+      color: rgba(74,99,90,0.25);
+      font-size: 0.75rem;
+      user-select: none;
+    }
+
+    /* ============================== HERO ============================== */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 100px 36px 80px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .hero-bg-circles { position: absolute; inset: 0; pointer-events: none; }
+    .hero-circle {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.28;
+    }
+    .hero-circle.c1 { width: 600px; height: 600px; background: var(--primary-light); top: -200px; left: -120px; }
+    .hero-circle.c2 { width: 500px; height: 500px; background: var(--primary-mint); bottom: -180px; right: -100px; }
+    .hero-circle.c3 { width: 350px; height: 350px; background: var(--primary-light); top: 40%; right: 20%; opacity: 0.15; }
+    .hero-grid {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      width: 100%;
+    }
+    .hero-content { padding-right: 20px; }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(167,243,208,0.30);
+      border: 1px solid rgba(11,110,79,0.15);
+      color: var(--primary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 6px 16px;
+      border-radius: var(--radius-pill);
+      margin-bottom: 24px;
+    }
+    .hero-badge .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: pulse-dot 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(1.5); }
+    }
+    .hero-content h1 {
+      font-size: clamp(2.5rem, 5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.10;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    .hero-content h1 .gradient-text {
+      background: linear-gradient(135deg, var(--primary) 0%, #0D8A63 50%, var(--primary-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-subtitle {
+      font-size: 1.1rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      max-width: 460px;
+      margin-bottom: 32px;
+    }
+    .hero-ctas {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: var(--radius-pill);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(11,110,79,0.30);
+    }
+    .btn-primary:hover {
+      background: #0A5F43;
+      box-shadow: 0 8px 30px rgba(11,110,79,0.40);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+    .btn-outline:hover { background: rgba(11,110,79,0.06); }
+
+    /* Phone mockup */
+    .phone-mockup-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .phone-frame {
+      width: 280px;
+      height: 570px;
+      background: #1a1a1a;
+      border-radius: 40px;
+      padding: 12px;
+      box-shadow: 0 30px 80px rgba(11,110,79,0.20), 0 4px 16px rgba(0,0,0,0.08);
+      position: relative;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border-radius: 30px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-notch {
+      width: 90px;
+      height: 28px;
+      background: #1a1a1a;
+      border-radius: 0 0 18px 18px;
+      margin: 0 auto;
+      position: relative;
+      top: -1px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .phone-notch .cam {
+      width: 8px; height: 8px;
+      background: #2a2a3a;
+      border-radius: 50%;
+      border: 1.5px solid #3a3a4a;
+    }
+    .phone-inner {
+      flex: 1;
+      padding: 8px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #fafcfa;
+    }
+    .phone-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-align: center;
+      letter-spacing: -0.01em;
+    }
+    .phone-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      border: 1px solid #e0e8e3;
+      border-radius: 10px;
+      padding: 6px 10px;
+    }
+    .phone-field-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+    .phone-field input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text);
+      outline: none;
+      text-align: right;
+      width: 40px;
+    }
+    .phone-field-unit {
+      font-size: 0.60rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .phone-chips {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .phone-chip {
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 0.60rem;
+      font-weight: 600;
+      border: 1px solid #d8e5dd;
+      color: var(--secondary);
+      background: var(--bg-card);
+    }
+    .phone-chip.active {
+      background: var(--primary-mint);
+      border-color: var(--primary-light);
+      color: var(--primary);
+    }
+    .phone-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 9px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.2s;
+    }
+    .phone-result {
+      background: linear-gradient(135deg, #F0FAF5, #E8F6EF);
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(11,110,79,0.12);
+    }
+    .phone-result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 0;
+    }
+    .phone-result-label {
+      font-size: 0.62rem;
+      color: var(--secondary);
+      font-weight: 500;
+    }
+    .phone-result-val {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .phone-result-divider {
+      border: none;
+      border-top: 1px dashed #c8dcd2;
+      margin: 4px 0;
+    }
+
+    /* ============================== SECTION COMMON ============================== */
+    section {
+      padding: 100px 36px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .section-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin-bottom: 48px;
+    }
+
+    /* ============================== FEATURES ============================== */
+    .features { background: var(--bg-card); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      border: 1px solid rgba(11,110,79,0.06);
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+    }
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 14px;
+      display: block;
+    }
+    .feature-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    /* ============================== HOW IT WORKS ============================== */
+    .how-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      position: relative;
+    }
+    .step-card {
+      text-align: center;
+      position: relative;
+    }
+    .step-number {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, #0D8A63 100%);
+      color: #fff;
+      font-size: 1.4rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 24px rgba(11,110,79,0.25);
+      position: relative;
+      z-index: 2;
+    }
+    .step-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .step-card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .how-connector { display: none; }
+    @media (min-width: 901px) {
+      .how-steps::before {
+        content: '';
+        position: absolute;
+        top: 28px;
+        left: 12.5%;
+        right: 12.5%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary-mint), var(--primary-light), var(--primary-mint));
+        z-index: 1;
+      }
+    }
+
+    /* ============================== SAFETY ============================== */
+    .safety { background: var(--amber-bg); }
+    .safety .section-label { color: var(--amber); }
+    .safety-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+    .safety-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 24px;
+      border: 1px solid rgba(138,90,0,0.12);
+      box-shadow: var(--shadow-sm);
+    }
+    .safety-card .safety-icon {
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .safety-card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .safety-card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ============================== INTEGRATIONS ============================== */
+    .integrations-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+    .integration-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      text-align: center;
+      border: 1px solid rgba(11,110,79,0.06);
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .integration-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+    .integration-icon {
+      font-size: 2.2rem;
+      margin-bottom: 14px;
+      display: block;
+    }
+    .integration-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .integration-card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* ============================== CTA ============================== */
+    .cta-download {
+      background: linear-gradient(135deg, #0B6E4F 0%, #08573D 50%, #0B6E4F 100%);
+      text-align: center;
+      padding: 88px 36px;
+    }
+    .cta-download .section-title { color: #fff; }
+    .cta-download .section-subtitle {
+      color: rgba(255,255,255,0.78);
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+    .btn-store {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 32px;
+      border-radius: var(--radius-pill);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .btn-store:hover { transform: translateY(-2px); }
+    .btn-play {
+      background: #fff;
+      color: #1C1B1F;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.18);
+    }
+    .btn-play:hover { box-shadow: 0 10px 36px rgba(0,0,0,0.25); }
+    .btn-github {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      backdrop-filter: blur(6px);
+    }
+    .btn-github:hover { background: rgba(255,255,255,0.18); }
+    .disclaimer-box {
+      max-width: 640px;
+      margin: 0 auto;
+      background: rgba(138,90,0,0.12);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      text-align: left;
+    }
+    .disclaimer-box .disc-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .disclaimer-box p {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.55;
+    }
+
+    /* ============================== FOOTER ============================== */
+    .footer {
+      background: #0a0e0c;
+      color: rgba(255,255,255,0.60);
+      padding: 48px 36px;
+      text-align: center;
+    }
+    .footer-links {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      list-style: none;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .footer-links a {
+      color: rgba(255,255,255,0.55);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color var(--transition);
+    }
+    .footer-links a:hover { color: var(--primary-light); }
+    .footer-copy {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* ============================== SCROLL REVEAL ============================== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ============================== RESPONSIVE ============================== */
+    @media (max-width: 1000px) {
+      .features-grid,
+      .safety-grid,
+      .integrations-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 900px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .hero-content {
+        order: 2;
+        text-align: center;
+        padding-right: 0;
+      }
+      .hero-subtitle { margin-left: auto; margin-right: auto; }
+      .hero-ctas { justify-content: center; }
+      .phone-mockup-wrapper { order: 1; }
+      .hero { padding: 120px 24px 60px; min-height: auto; }
+      .hero-badge { margin-left: auto; margin-right: auto; }
+      section { padding: 72px 24px; }
+      .how-steps {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .how-steps::before { display: none; }
+      .nav-links { display: none; }
+      .lang-switch { margin-left: auto; padding-left: 12px; border-left: none; }
+      .navbar { padding: 14px 24px; }
+      .section-subtitle { margin-left: auto; margin-right: auto; text-align: center; }
+    }
+    @media (max-width: 600px) {
+      .features-grid,
+      .safety-grid,
+      .integrations-grid,
+      .how-steps {
+        grid-template-columns: 1fr;
+      }
+      .phone-frame {
+        width: 240px;
+        height: 490px;
+        border-radius: 34px;
+        padding: 10px;
+      }
+      .phone-screen { border-radius: 26px; }
+      .phone-notch { width: 70px; height: 24px; }
+      .phone-inner { padding: 6px 10px 10px; gap: 6px; }
+      .hero-content h1 { font-size: clamp(2rem, 7vw, 2.6rem); }
+      .section-title { font-size: clamp(1.6rem, 6vw, 2rem); }
+      .footer-links { gap: 20px; }
+    }
+  </style>
+<style data-od-tweaks-bridge-style="">
+[data-od-tweaks-hidden] .tw-panel {
+  transform: translateX(calc(100% + 32px)) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.tw-restore { display: none !important; }
+</style><script data-od-tweaks-bridge="">(function(){
+  // Synchronously hide BEFORE the artifact body parses so the panel never
+  // flashes on initial paint. The host removes the attribute via postMessage
+  // once it knows the desired state.
+  document.documentElement.setAttribute('data-od-tweaks-hidden', '');
+
+  var suppressEcho = false;
+  var observer = null;
+
+  function panelEl(){ return document.querySelector('.tw-panel'); }
+
+  function applyClassesToPanel(visible){
+    var panel = panelEl();
+    if (panel) panel.classList.toggle('tw-hidden', !visible);
+  }
+
+  function setPanelVisible(visible){
+    suppressEcho = true;
+    document.documentElement.toggleAttribute('data-od-tweaks-hidden', !visible);
+    applyClassesToPanel(visible);
+    // Clear flag after the MutationObserver has had a chance to fire for this
+    // change so we don't echo our own host-driven toggles back to the host.
+    Promise.resolve().then(function(){ suppressEcho = false; });
+  }
+
+  function postState(){
+    var panel = panelEl();
+    if (!panel) return;
+    try {
+      parent.postMessage({
+        type: 'od:tweaks-panel-state',
+        visible: !panel.classList.contains('tw-hidden'),
+      }, '*');
+    } catch (e) {}
+  }
+
+  function postAvailability(){
+    try {
+      parent.postMessage({
+        type: 'od:tweaks-available',
+        available: !!panelEl(),
+      }, '*');
+    } catch (e) {}
+  }
+
+  function attachObserver(){
+    var panel = panelEl();
+    if (!panel || observer) return;
+    observer = new MutationObserver(function(){
+      if (suppressEcho) return;
+      postState();
+    });
+    observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  function onReady(){
+    // Capture the panel authored visibility BEFORE we apply the host hidden
+    // attribute. The bridge sets data-od-tweaks-hidden synchronously in head
+    // (before the body parses), so on entry to onReady the attribute is
+    // always present even though the artifact may have authored the panel
+    // as default-visible. Reading the panel class first is the only place
+    // we can still observe the author intent. Then drive the attribute,
+    // classes, and posted state from that captured value so a default
+    // visible tw-panel reports visible:true and the toolbar toggle starts
+    // ON. Issue surfaced in PR #1643 review.
+    var panel = panelEl();
+    var initialVisible = !!panel && !panel.classList.contains('tw-hidden');
+    document.documentElement.toggleAttribute('data-od-tweaks-hidden', !initialVisible);
+    applyClassesToPanel(initialVisible);
+    attachObserver();
+    postAvailability();
+    // Post the captured initial visibility so the toolbar toggle reflects
+    // the default state on mount. Without this the toggle reads OFF while
+    // a default-visible tw-panel artifact clearly shows its panel and the
+    // user would have to click toggle-on then toggle-off to actually hide.
+    postState();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', onReady);
+  } else {
+    onReady();
+  }
+
+  window.addEventListener('message', function(ev){
+    if (!ev.data || ev.data.type !== 'od:tweaks-panel-visible') return;
+    setPanelVisible(!!ev.data.visible);
+  });
+})();</script></head>
 <body>
 
-    <!-- ── Navigation ── -->
-    <nav>
-        <div class="nav-inner">
-            <a href="#" class="nav-brand">
-                <div class="nav-logo">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2C10 2 8.5 4 8.5 6.5C8.5 9 10 11 12 13C14 11 15.5 9 15.5 6.5C15.5 4 14 2 12 2Z" fill="rgba(255,255,255,0.9)"/>
-                        <path d="M12 13C10 15 8.5 17 8.5 19.5C8.5 21.5 10 22.5 12 22.5C14 22.5 15.5 21.5 15.5 19.5C15.5 17 14 15 12 13Z" fill="rgba(167,243,208,0.8)"/>
-                    </svg>
+  <!-- ============================== NAVBAR ============================== -->
+  <nav class="navbar" id="navbar" data-od-id="path-0">
+    <a href="#" class="nav-brand" data-od-id="path-0-0">
+      <svg width="36" height="36" viewBox="0 0 36 36" role="img" aria-label="CalcolaBolo logo — goccia d'insulina stilizzata">
+        <defs>
+          <linearGradient id="logoGrad" x1="0" y1="0" x2="0" y2="1" data-od-id="path-0-0-0-0-0">
+            <stop offset="0%" stop-color="#0B6E4F"></stop>
+            <stop offset="100%" stop-color="#0D8A63"></stop>
+          </linearGradient>
+        </defs>
+        <rect width="36" height="36" rx="10" fill="url(#logoGrad)"></rect>
+        <path d="M18 7 C10 15 8 19 8 23 C8 28 12 32 18 32 C24 32 28 28 28 23 C28 19 26 15 18 7Z" fill="none" stroke="#fff" stroke-width="1.6"></path>
+        <path d="M18 17 C14 21 13 23 13 25.5 C13 28.5 15.5 30.5 18 30.5 C20.5 30.5 23 28.5 23 25.5 C23 23 22 21 18 17Z" fill="#A7F3D0"></path>
+      </svg>
+      CalcolaBolo
+    </a>
+    <div style="display:flex;align-items:center;">
+      <ul class="nav-links">
+        <li><a href="#features" data-i18n="nav.features" data-od-id="path-0-1-0-0-0">Features</a></li>
+        <li><a href="#how" data-i18n="nav.how" data-od-id="path-0-1-0-1-0">How It Works</a></li>
+        <li><a href="#safety" data-i18n="nav.safety" data-od-id="path-0-1-0-2-0">Safety</a></li>
+        <li><a href="#integrations" data-i18n="nav.integrations" data-od-id="path-0-1-0-3-0">Integrations</a></li>
+        <li><a href="#download" data-i18n="nav.download" data-od-id="path-0-1-0-4-0">Download</a></li>
+      </ul>
+      <div class="lang-switch" id="lang-switch" data-od-id="path-0-1-1">
+        <button class="lang-btn active" data-lang="it" data-i18n-aria="lang.it" data-od-id="path-0-1-1-0">IT</button>
+        <span class="lang-sep">|</span>
+        <button class="lang-btn" data-lang="en" data-i18n-aria="lang.en" data-od-id="path-0-1-1-2">EN</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================== HERO ============================== -->
+  <section class="hero" id="hero" data-od-id="path-1">
+    <div class="hero-bg-circles" aria-hidden="true" data-od-id="path-1-0">
+      <div class="hero-circle c1"></div>
+      <div class="hero-circle c2"></div>
+      <div class="hero-circle c3"></div>
+    </div>
+    <div class="hero-grid" data-od-id="path-1-1">
+      <div class="hero-content">
+        <div class="hero-badge reveal">
+          <span class="dot" aria-hidden="true"></span>
+          <span data-i18n="hero.badge">Advanced Insulin Therapy</span>
+        </div>
+        <h1 class="reveal" data-i18n-html="hero.headline" data-od-id="path-1-1-0-1">Precision <span class="gradient-text">Insulin Bolus Calculator</span></h1>
+        <p class="hero-subtitle reveal" data-i18n-html="hero.subtitle">
+          Standard bolus calculators only look at carbs. But high-fat, high-protein meals cause delayed glucose spikes — the "pizza effect." CalcolaBolo uses the <strong>Warsaw Formula</strong> and <strong>Fat-Protein Units (FPU)</strong> to compute an immediate bolus plus a fractionated extended bolus with scheduled injection reminders.
+        </p>
+        <div class="hero-ctas reveal">
+          <a href="#download" class="btn btn-primary" data-i18n="hero.cta" data-od-id="path-1-1-0-3-0">Get the App</a>
+          <a href="#features" class="btn btn-outline" data-i18n="hero.ctaOutline" data-od-id="path-1-1-0-3-1">Explore Features</a>
+        </div>
+      </div>
+      <div class="phone-mockup-wrapper reveal">
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch" aria-hidden="true"><div class="cam"></div></div>
+            <div class="phone-inner">
+              <div class="phone-title">CalcolaBolo</div>
+
+              <div class="phone-field">
+                <span class="phone-field-label" data-i18n="phone.carbs">Carbs</span>
+                <input type="text" value="65" readonly="" aria-label="Carbohydrates">
+                <span class="phone-field-unit">g</span>
+              </div>
+              <div class="phone-field">
+                <span class="phone-field-label" data-i18n="phone.fat">Fat</span>
+                <input type="text" value="32" readonly="" aria-label="Fat">
+                <span class="phone-field-unit">g</span>
+              </div>
+              <div class="phone-field">
+                <span class="phone-field-label" data-i18n="phone.protein">Protein</span>
+                <input type="text" value="28" readonly="" aria-label="Protein">
+                <span class="phone-field-unit">g</span>
+              </div>
+              <div class="phone-field">
+                <span class="phone-field-label" data-i18n="phone.glucose">Glucose</span>
+                <input type="text" value="162" readonly="" aria-label="Glucose">
+                <span class="phone-field-unit">mg/dL</span>
+              </div>
+
+              <div class="phone-chips">
+                <span class="phone-chip active">FPU</span>
+                <span class="phone-chip" data-i18n="phone.pen">Pen 0.5U</span>
+                <span class="phone-chip">60min</span>
+              </div>
+
+              <button class="phone-btn" tabindex="-1" data-i18n="phone.calculate" data-od-id="path-1-1-1-0-0-1-6">Calculate</button>
+
+              <div class="phone-result">
+                <div class="phone-result-row">
+                  <span class="phone-result-label" data-i18n="phone.immediate">Immediate bolus</span>
+                  <span class="phone-result-val">4.5 U</span>
                 </div>
-                CalcolaBolo
-            </a>
-            <div class="nav-right">
-                <ul class="nav-links">
-                    <li><a href="#features" data-i18n="nav_features">Funzionalità</a></li>
-                    <li><a href="#how-it-works" data-i18n="nav_how">Come funziona</a></li>
-                    <li><a href="#safety" data-i18n="nav_safety">Sicurezza</a></li>
-                    <li><a href="#integrations" data-i18n="nav_integrations">Integrazioni</a></li>
-                </ul>
-                <div class="lang-switch">
-                    <button id="lang-it" class="active">IT</button>
-                    <button id="lang-en">EN</button>
+                <hr class="phone-result-divider">
+                <div class="phone-result-row">
+                  <span class="phone-result-label" data-i18n="phone.extended">Extended bolus</span>
+                  <span class="phone-result-val">3.2 U</span>
                 </div>
-                <a href="#download" class="nav-cta" data-i18n="nav_cta">Scarica</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- ── Hero ── -->
-    <section class="hero" id="hero">
-        <div class="hero-bg-circle c1"></div>
-        <div class="hero-bg-circle c2"></div>
-        <div class="hero-bg-circle c3"></div>
-        <div class="hero-content">
-            <div class="hero-text">
-                <div class="hero-badge">
-                    <span class="dot"></span> <span data-i18n="hero_badge">Terapia Insulinica Avanzata</span>
+                <hr class="phone-result-divider">
+                <div class="phone-result-row">
+                  <span class="phone-result-label" data-i18n="phone.injections">Injections</span>
+                  <span class="phone-result-val" data-i18n="phone.doses">3 doses</span>
                 </div>
-                <h1>
-                    <span data-i18n="hero_title_line1">Precision Insulin</span><br>
-                    <span class="highlight" data-i18n="hero_title_line2">Bolus Calculator</span>
-                </h1>
-                <p class="hero-subtitle" data-i18n="hero_subtitle">
-                    L'unico calcolatore avanzato che usa la <strong>formula Warsaw</strong> e le <strong>Unità Grassi-Proteine (FPU)</strong>
-                    per gestire pasti complessi. Perché il diabete non si ferma ai carboidrati.
-                </p>
-                <div class="hero-actions">
-                    <a href="#download" class="btn btn-primary">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12l4 4 4-4"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
-                        <span data-i18n="hero_cta1">Scarica l'App</span>
-                    </a>
-                    <a href="#features" class="btn btn-outline">
-                        <span data-i18n="hero_cta2">Esplora Funzionalità</span>
-                    </a>
+                <hr class="phone-result-divider">
+                <div class="phone-result-row">
+                  <span class="phone-result-label" data-i18n="phone.duration">Duration</span>
+                  <span class="phone-result-val">4h</span>
                 </div>
+              </div>
             </div>
-            <div class="hero-visual">
-                <div class="phone-mockup">
-                    <div class="phone-screen">
-                        <div class="mock-status">9:41 &nbsp; █████ &nbsp; &nbsp; ███</div>
-                        <div class="mock-app-header">
-                            <div class="mock-app-icon"></div>
-                            <div>
-                                <div class="mock-app-title">CalcolaBolo</div>
-                                <div class="mock-app-sub" data-i18n="mock_sub">Bolus Calculator</div>
-                            </div>
-                        </div>
-                        <div class="mock-field">
-                            <div class="mock-field-label" data-i18n="mock_carbs">Carboidrati (g)</div>
-                            <div class="mock-field-val">75</div>
-                        </div>
-                        <div class="mock-field">
-                            <div class="mock-field-label" data-i18n="mock_fatprot">Grassi · Proteine (g)</div>
-                            <div class="mock-field-val">32 · 28</div>
-                        </div>
-                        <div class="mock-field">
-                            <div class="mock-field-label" data-i18n="mock_bg">Glicemia</div>
-                            <div class="mock-field-val">142 mg/dL →</div>
-                        </div>
-                        <div class="mock-chips">
-                            <span class="mock-chip active">FPU 75%</span>
-                            <span class="mock-chip" data-i18n="mock_pen">Penna</span>
-                            <span class="mock-chip">60 min</span>
-                        </div>
-                        <div class="mock-btn" data-i18n="mock_calc">Calcola Bolo</div>
-                        <div class="mock-card">
-                            <div class="dose">4.5 U</div>
-                            <div class="label" data-i18n="mock_immediate">Bolo immediato</div>
-                            <div style="display:flex;gap:8px;margin-top:6px;">
-                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">2.0</span><div class="label" data-i18n="mock_extended">Esteso</div></div>
-                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">4</span><div class="label" data-i18n="mock_injections">Iniezioni</div></div>
-                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">6h</span><div class="label" data-i18n="mock_duration">Durata</div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <!-- ── Features ── -->
-    <section id="features">
-        <div class="section-inner">
-            <div class="section-label reveal" data-i18n="features_label">Funzionalità Principali</div>
-            <h2 class="section-title reveal" data-i18n="features_title">Tutto ciò che serve<br>per un dosaggio preciso</h2>
-            <p class="section-desc reveal" data-i18n="features_desc">
-                CalcolaBolo va oltre il conteggio dei carboidrati con algoritmi clinicamente fondati,
-                progettati per la complessità reale della gestione del diabete.
-            </p>
-            <div class="features-grid" id="features-container"></div>
-        </div>
-    </section>
+  <!-- ============================== FEATURES ============================== -->
+  <section class="features" id="features" data-od-id="path-2">
+    <div class="section-label reveal" data-i18n="features.label" data-od-id="path-2-0">Features</div>
+    <h2 class="section-title reveal" data-i18n="features.title" data-od-id="path-2-1">Everything you need for precision dosing</h2>
+    <p class="section-subtitle reveal" data-i18n="features.subtitle">CalcolaBolo goes beyond carb counting. Eight powerful features designed with endocrinologists and real-world diabetes management in mind.</p>
+    <div class="features-grid" data-od-id="path-2-3">
+      <div class="feature-card reveal">
+        <span class="feature-icon" aria-hidden="true">📐</span>
+        <h3 data-i18n="features.1.title" data-od-id="path-2-3-0-1">Warsaw Formula &amp; FPU</h3>
+        <p data-i18n="features.1.desc">Calculates bolus for carbs, fat, and protein — not just carbs. Handles the "pizza effect" with fractionated extended delivery over 3–8 hours.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon" aria-hidden="true">📈</span>
+        <h3 data-i18n="features.2.title" data-od-id="path-2-3-1-1">CGM-style Trend Projection</h3>
+        <p data-i18n="features.2.desc">Five-arrow trend display (↓↓ rapid fall, ↓ falling, → stable, ↑ rising, ↑↑ rapid rise) with mg/dL offset for glucose-aware dosing decisions.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon" aria-hidden="true">⏰</span>
+        <h3 data-i18n="features.3.title" data-od-id="path-2-3-2-1">Smart Injection Reminders</h3>
+        <p data-i18n="features.3.desc">Exact alarms for each fractionated dose of the extended bolus, up to 8 hours. Pierces Do Not Disturb. Actions: Done / Snooze.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon" aria-hidden="true">🔗</span>
+        <h3 data-i18n="features.4.title" data-od-id="path-2-3-3-1">Nightscout CGM Integration</h3>
+        <p data-i18n="features.4.desc">Real-time glucose reading and trend from your Nightscout site. One-tap to populate — no manual typing. Works with Dexcom, Libre, and Eversense.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon" aria-hidden="true">📸</span>
+        <h3 data-i18n="features.5.title" data-od-id="path-2-3-4-1">Food Barcode Scanner</h3>
+        <p data-i18n="features.5.desc">Scan barcodes with ML Kit and get carbs, fat, and protein from the OpenFoodFacts database. Free, no API key required.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon" aria-hidden="true">🕐</span>
+        <h3 data-i18n="features.6.title" data-od-id="path-2-3-5-1">Time-of-Day Profiles</h3>
+        <p data-i18n="features.6.desc">Different insulin sensitivity factors, I:C ratios, and glucose targets for different hours. Your body changes — your parameters should too.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon" aria-hidden="true">☁️</span>
+        <h3 data-i18n="features.7.title" data-od-id="path-2-3-6-1">Cloud Sync &amp; Offline</h3>
+        <p data-i18n="features.7.desc">Google Sign-In, medical profile sync via Firebase Firestore. Works offline, syncs when you're back online. Your data stays yours.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon" aria-hidden="true">⚙️</span>
+        <h3 data-i18n="features.8.title" data-od-id="path-2-3-7-1">Clinician-configurable Parameters</h3>
+        <p data-i18n="features.8.desc">FPU percentage, DIA, dose rounding (pen 0.5 U or micro 0.1 U), max bolus cap. Everything adjustable under medical supervision.</p>
+      </div>
+    </div>
+  </section>
 
-    <!-- ── How It Works ── -->
-    <section id="how-it-works">
-        <div class="section-inner">
-            <div class="section-label reveal" data-i18n="steps_label">Come Funziona</div>
-            <h2 class="section-title reveal" data-i18n="steps_title">Quattro passi verso<br>un piano di bolo preciso</h2>
-            <p class="section-desc reveal" data-i18n="steps_desc">
-                Dai dati del pasto al piano di iniezione in pochi secondi. Progettato per velocità e sicurezza.
-            </p>
-            <div class="steps-grid" id="steps-container"></div>
-        </div>
-    </section>
+  <!-- ============================== HOW IT WORKS ============================== -->
+  <section id="how" data-od-id="path-3">
+    <div class="section-label reveal" data-i18n="how.label" data-od-id="path-3-0">How It Works</div>
+    <h2 class="section-title reveal" data-i18n="how.title" data-od-id="path-3-1">Four simple steps to a safer meal</h2>
+    <p class="section-subtitle reveal" data-i18n="how.subtitle">From meal data to a complete insulin plan in under 30 seconds.</p>
+    <div class="how-steps" data-od-id="path-3-3">
+      <div class="step-card reveal">
+        <div class="step-number">1</div>
+        <h3 data-i18n="how.1.title" data-od-id="path-3-3-0-1">Enter your meal data</h3>
+        <p data-i18n="how.1.desc">Type carbs, fat, and protein manually, scan a barcode, or pull glucose from your CGM with one tap.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">2</div>
+        <h3 data-i18n="how.2.title" data-od-id="path-3-3-1-1">Set the context</h3>
+        <p data-i18n="how.2.desc">Select your glucose trend arrow, FPU percentage, and delivery method (pen or pump) for personalized calculation.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">3</div>
+        <h3 data-i18n="how.3.title" data-od-id="path-3-3-2-1">Calculate</h3>
+        <p data-i18n="how.3.desc">The Warsaw engine computes your immediate bolus plus a fractionated extended bolus plan with exact dose timing.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">4</div>
+        <h3 data-i18n="how.4.title" data-od-id="path-3-3-3-1">Follow the plan</h3>
+        <p data-i18n="how.4.desc">Receive scheduled alarms for each injection. Mark doses as done or snooze — the app keeps you on track for up to 8 hours.</p>
+      </div>
+    </div>
+  </section>
 
-    <!-- ── Safety ── -->
-    <section id="safety">
-        <div class="section-inner">
-            <div class="section-label reveal" data-i18n="safety_label">Sicurezza al Primo Posto</div>
-            <h2 class="section-title reveal" data-i18n="safety_title">Progettato con<br>cautela clinica</h2>
-            <p class="section-desc reveal" data-i18n="safety_desc">
-                Gli strumenti di calcolo medico devono essere sicuri. CalcolaBolo include molteplici
-                protezioni per aiutarti a evitare errori di dosaggio.
-            </p>
-            <div class="safety-grid" id="safety-container"></div>
-        </div>
-    </section>
+  <!-- ============================== SAFETY ============================== -->
+  <section class="safety" id="safety" data-od-id="path-4">
+    <div class="section-label reveal" data-i18n="safety.label" data-od-id="path-4-0">Safety First</div>
+    <h2 class="section-title reveal" data-i18n="safety.title" data-od-id="path-4-1">Built-in guardrails for peace of mind</h2>
+    <p class="section-subtitle reveal" data-i18n="safety.subtitle">Every calculation is checked against configurable safety thresholds before a dose is ever suggested.</p>
+    <div class="safety-grid" data-od-id="path-4-3">
+      <div class="safety-card reveal">
+        <span class="safety-icon" aria-hidden="true">🛡️</span>
+        <h3 data-i18n="safety.1.title" data-od-id="path-4-3-0-1">Hypo Warning</h3>
+        <p data-i18n="safety.1.desc">If your glucose is below your configured threshold, CalcolaBolo flags it and suggests treating the hypo before calculating a meal bolus.</p>
+      </div>
+      <div class="safety-card reveal">
+        <span class="safety-icon" aria-hidden="true">🔒</span>
+        <h3 data-i18n="safety.2.title" data-od-id="path-4-3-1-1">Max Bolus Cap</h3>
+        <p data-i18n="safety.2.desc">A visible warning appears when the calculated dose exceeds your clinician-set maximum. The app never auto-administers — you always make the final call.</p>
+      </div>
+      <div class="safety-card reveal">
+        <span class="safety-icon" aria-hidden="true">💡</span>
+        <h3 data-i18n="safety.3.title" data-od-id="path-4-3-2-1">Single Bolus Advice</h3>
+        <p data-i18n="safety.3.desc">When the extended portion is ≤ 2.0 units, the app recommends a single immediate injection instead of an unnecessary split. Simpler, safer.</p>
+      </div>
+      <div class="safety-card reveal">
+        <span class="safety-icon" aria-hidden="true">⚕️</span>
+        <h3 data-i18n="safety.4.title" data-od-id="path-4-3-3-1">Medical Disclaimer</h3>
+        <p data-i18n="safety.4.desc">A mandatory disclaimer on first launch ensures every user understands CalcolaBolo is a decision-support tool — not a replacement for clinical judgment.</p>
+      </div>
+    </div>
+  </section>
 
-    <!-- ── Integrations ── -->
-    <section id="integrations">
-        <div class="section-inner">
-            <div class="section-label reveal" data-i18n="integrations_label">Integrazioni</div>
-            <h2 class="section-title reveal" data-i18n="integrations_title">Tecnologie aperte<br>e affidabili</h2>
-            <p class="section-desc reveal" data-i18n="integrations_desc">
-                CalcolaBolo si connette all'ecosistema digitale per il diabete su cui fai già affidamento.
-            </p>
-            <div class="integrations-grid" id="integrations-container"></div>
-        </div>
-    </section>
+  <!-- ============================== INTEGRATIONS ============================== -->
+  <section id="integrations" data-od-id="path-5">
+    <div class="section-label reveal" data-i18n="integrations.label" data-od-id="path-5-0">Integrations</div>
+    <h2 class="section-title reveal" data-i18n="integrations.title" data-od-id="path-5-1">Plug into your existing diabetes toolkit</h2>
+    <p class="section-subtitle reveal" data-i18n="integrations.subtitle">CalcolaBolo connects with the tools you already use — no walled garden, no vendor lock-in.</p>
+    <div class="integrations-grid" data-od-id="path-5-3">
+      <div class="integration-card reveal">
+        <span class="integration-icon" aria-hidden="true">📡</span>
+        <h3 data-i18n="integrations.1.title" data-od-id="path-5-3-0-1">Nightscout CGM</h3>
+        <p data-i18n="integrations.1.desc">Real-time glucose &amp; trend from your personal Nightscout site. Supports Dexcom, Libre, Eversense.</p>
+      </div>
+      <div class="integration-card reveal">
+        <span class="integration-icon" aria-hidden="true">🍎</span>
+        <h3 data-i18n="integrations.2.title" data-od-id="path-5-3-1-1">OpenFoodFacts</h3>
+        <p data-i18n="integrations.2.desc">Free, open food database with macros for millions of products. Barcode scanning, no API key.</p>
+      </div>
+      <div class="integration-card reveal">
+        <span class="integration-icon" aria-hidden="true">🔥</span>
+        <h3 data-i18n="integrations.3.title" data-od-id="path-5-3-2-1">Firebase Sync</h3>
+        <p data-i18n="integrations.3.desc">Your medical profile syncs securely across devices. Works offline — syncs when you reconnect.</p>
+      </div>
+      <div class="integration-card reveal">
+        <span class="integration-icon" aria-hidden="true">🔐</span>
+        <h3 data-i18n="integrations.4.title" data-od-id="path-5-3-3-1">Google Sign-In</h3>
+        <p data-i18n="integrations.4.desc">One-tap authentication. No separate account to remember. Your data is tied to your identity, not your device.</p>
+      </div>
+    </div>
+  </section>
 
-    <!-- ── Download CTA ── -->
-    <section id="download">
-        <div class="section-inner">
-            <div class="section-label reveal" data-i18n="cta_label">Scarica CalcolaBolo</div>
-            <h2 class="section-title reveal" data-i18n="cta_title">Pronto per una terapia<br>insulinica di precisione?</h2>
-            <p class="section-desc reveal" data-i18n="cta_desc">
-                Download gratuito. Con pubblicità, rimovibile con un acquisto una tantum.<br>
-                Nessun abbonamento. Nessuna vendita di dati.
-            </p>
-            <div class="download-options reveal">
-                <a href="https://play.google.com/store/apps/details?id=com.costa.calcolabolo" class="btn-download" target="_blank" rel="noopener">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 1.6L14.8 12 3.6 22.4C2.6 21.5 2 20.2 2 19V5c0-1.2.6-2.5 1.6-3.4z"/><path d="M17.5 10.5l-2.7-2.3L3.6 1.6C4.3 1.2 5.1 1 6 1c1.1 0 2.1.4 2.9 1.1L17.5 7.5c.7.5 1.1 1.3 1.1 2.1s-.4 1.6-1.1 2.1l-3.1 2.2-2.7-2.3 2.7-2.3 3.1 2.2c.7.5 1.1 1.3 1.1 2.1s-.4 1.6-1.1 2.1l-.1.1-5.6-4.7-5.6 4.7-3.1-2.2c-.7-.5-1.1-1.3-1.1-2.1s.4-1.6 1.1-2.1l3.1-2.2 5.6 4.7 5.6-4.7z"/></svg>
-                    Google Play
-                </a>
-            </div>
-            <div class="disclaimer-bar reveal">
-                <span class="warn-icon">⚕️</span>
-                <span data-i18n="disclaimer">
-                    <strong>Disclaimer Medico:</strong> CalcolaBolo è uno strumento di supporto decisionale e non
-                    sostituisce il parere medico professionale. Tutti i calcoli sono stime. Consulta sempre il tuo
-                    diabetologo prima di modificare la terapia insulinica.
-                </span>
-            </div>
-        </div>
-    </section>
+  <!-- ============================== DOWNLOAD CTA ============================== -->
+  <section class="cta-download" id="download" data-od-id="path-6">
+    <h2 class="section-title reveal" data-i18n="cta.title" data-od-id="path-6-0">Ready for precision insulin therapy?</h2>
+    <p class="section-subtitle reveal" data-i18n="cta.subtitle">
+      Free to download. Ad-supported with a one-time purchase to remove ads. Open source under GPL v3.0. No subscriptions. No data selling.
+    </p>
+    <div class="cta-buttons reveal" data-od-id="path-6-2">
+      <a href="#" class="btn-store btn-play" aria-label="Get it on Google Play" data-od-id="path-6-2-0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.6 1.4C3.2 1.8 3 2.3 3 3v18c0 .7.2 1.2.6 1.6L13.3 12 3.6 1.4z" fill="#2196F3"></path><path d="M16.3 8.4L13.3 12l3 3.6 3.1-1.8c.7-.4 1-1 1-1.8s-.3-1.4-1-1.8l-3.1-1.8z" fill="#FFC107"></path><path d="M3.6 22.6c.4.4 1 .4 1.8 0l10.3-6h.1l-3-3.6-3 3.6-3-3.6-3.2 9.6z" fill="#4CAF50"></path><path d="M13.3 12l-3-3.6L3.6 1.4c-.4.4-.6.9-.6 1.6v18c0 .7.2 1.2.6 1.6L13.3 12z" fill="#F44336"></path></svg>
+        <span data-i18n="cta.googlePlay">Google Play</span>
+      </a>
+      <a href="#" class="btn-store btn-github" aria-label="View source on GitHub" data-od-id="path-6-2-1">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"></path></svg>
+        <span data-i18n="cta.github">View on GitHub</span>
+      </a>
+    </div>
+    <div class="disclaimer-box reveal" data-od-id="path-6-3">
+      <span class="disc-icon" aria-hidden="true">⚕️</span>
+      <p data-i18n-html="cta.disclaimer"><strong>Medical Disclaimer:</strong> CalcolaBolo is a decision-support tool and does not replace professional medical advice. All calculations are estimates. Always consult your diabetologist before making changes to your insulin therapy.</p>
+    </div>
+  </section>
 
-    <!-- ── Footer ── -->
-    <footer>
-        <div class="footer-inner">
-            <div class="footer-links">
-                <a href="https://play.google.com/store/apps/details?id=com.costa.calcolabolo" target="_blank" rel="noopener">Google Play</a>
-                <a href="mailto:costantinop.dev@gmail.com" data-i18n="footer_contact">Contatti</a>
-                <a href="#" data-i18n="footer_privacy">Privacy Policy</a>
-            </div>
-            <div class="footer-divider"></div>
-            <p class="footer-copy">
-                CalcolaBolo<br>
-                &copy; 2025 Costantino Pistagna. Tutti i diritti riservati.
-            </p>
-        </div>
-    </footer>
+  <!-- ============================== FOOTER ============================== -->
+  <footer class="footer" data-od-id="path-7">
+    <ul class="footer-links">
+      <li><a href="#" data-i18n="footer.github" data-od-id="path-7-0-0-0">GitHub</a></li>
+      <li><a href="#" data-i18n="footer.googlePlay" data-od-id="path-7-0-1-0">Google Play</a></li>
+      <li><a href="#" data-i18n="footer.contact" data-od-id="path-7-0-2-0">Contact</a></li>
+      <li><a href="#" data-i18n="footer.privacy" data-od-id="path-7-0-3-0">Privacy Policy</a></li>
+    </ul>
+    <p class="footer-copy" data-i18n="footer.copy">CalcolaBolo · Open Source GPL v3.0 · © 2025 Costantino Pistagna</p>
+  </footer>
 
-    <script>
-    // ── i18n Data ──
-    const i18n = {
-        it: {
-            // Nav
-            nav_features: 'Funzionalità',
-            nav_how: 'Come funziona',
-            nav_safety: 'Sicurezza',
-            nav_integrations: 'Integrazioni',
-            nav_cta: 'Scarica',
+  <script>
+    // ============================== I18N TRANSLATION DICTIONARY ==============================
+    var I18N = {
+      it: {
+        'meta.desc': "CalcolaBolo — Calcolatore avanzato di bolo insulinico con Formula Warsaw e FPU. Considera carboidrati, grassi e proteine. Open source GPL v3.0.",
+        'meta.ogTitle': "CalcolaBolo — Calcolatore Avanzato di Bolo Insulinico",
+        'meta.ogDesc': "Terapia insulinica di precisione. Formula Warsaw, FPU, integrazione CGM. Open source.",
+        'meta.title': "CalcolaBolo — Calcolatore Avanzato di Bolo Insulinico | Formula Warsaw e FPU",
 
-            // Hero
-            hero_badge: 'Terapia Insulinica Avanzata',
-            hero_title_line1: 'Precision Insulin',
-            hero_title_line2: 'Bolus Calculator',
-            hero_subtitle: 'L\'unico calcolatore avanzato che usa la <strong>formula Warsaw</strong> e le <strong>Unità Grassi-Proteine (FPU)</strong> per gestire pasti complessi. Perché il diabete non si ferma ai carboidrati.',
-            hero_cta1: 'Scarica l\'App',
-            hero_cta2: 'Esplora Funzionalità',
+        'nav.features': "Funzionalità",
+        'nav.how': "Come Funziona",
+        'nav.safety': "Sicurezza",
+        'nav.integrations': "Integrazioni",
+        'nav.download': "Download",
 
-            // Mockup
-            mock_sub: 'Calcolo Bolo',
-            mock_carbs: 'Carboidrati (g)',
-            mock_fatprot: 'Grassi · Proteine (g)',
-            mock_bg: 'Glicemia',
-            mock_pen: 'Penna',
-            mock_calc: 'Calcola Bolo',
-            mock_immediate: 'Bolo immediato',
-            mock_extended: 'Esteso',
-            mock_injections: 'Iniezioni',
-            mock_duration: 'Durata',
+        'lang.it': "Italiano",
+        'lang.en': "English",
 
-            // Features
-            features_label: 'Funzionalità Principali',
-            features_title: 'Tutto ciò che serve<br>per un dosaggio preciso',
-            features_desc: 'CalcolaBolo va oltre il conteggio dei carboidrati con algoritmi clinicamente fondati, progettati per la complessità reale della gestione del diabete.',
+        'hero.badge': "Terapia Insulinica Avanzata",
+        'hero.headline': 'Calcolatore <span class="gradient-text">di Bolo Insulinico</span> di Precisione',
+        'hero.subtitle': 'I calcolatori di bolo standard guardano solo i carboidrati. Ma i pasti ricchi di grassi e proteine causano un rialzo glicemico ritardato — il "pizza effect". CalcolaBolo usa la <strong>Formula Warsaw</strong> e le <strong>Fat-Protein Units (FPU)</strong> per calcolare un bolo immediato più un bolo esteso frazionato con promemoria programmati per ogni iniezione.',
+        'hero.cta': "Scarica l'App",
+        'hero.ctaOutline': "Esplora le Funzionalità",
 
-            // Steps
-            steps_label: 'Come Funziona',
-            steps_title: 'Quattro passi verso<br>un piano di bolo preciso',
-            steps_desc: 'Dai dati del pasto al piano di iniezione in pochi secondi. Progettato per velocità e sicurezza.',
+        'phone.carbs': "Carboidrati",
+        'phone.fat': "Grassi",
+        'phone.protein': "Proteine",
+        'phone.glucose': "Glicemia",
+        'phone.pen': "Pen 0.5U",
+        'phone.calculate': "Calcola",
+        'phone.immediate': "Bolo immediato",
+        'phone.extended': "Bolo esteso",
+        'phone.injections': "Iniezioni",
+        'phone.doses': "3 dosi",
+        'phone.duration': "Durata",
 
-            // Safety
-            safety_label: 'Sicurezza al Primo Posto',
-            safety_title: 'Progettato con<br>cautela clinica',
-            safety_desc: 'Gli strumenti di calcolo medico devono essere sicuri. CalcolaBolo include molteplici protezioni per aiutarti a evitare errori di dosaggio.',
+        'features.label': "Funzionalità",
+        'features.title': "Tutto ciò che serve per un dosaggio di precisione",
+        'features.subtitle': "CalcolaBolo va oltre il conteggio dei carboidrati. Otto potenti funzionalità progettate con endocrinologi per la gestione reale del diabete.",
+        'features.1.title': "Formula Warsaw e FPU",
+        'features.1.desc': "Calcola il bolo per carboidrati, grassi e proteine — non solo carboidrati. Gestisce il \"pizza effect\" con somministrazione estesa frazionata su 3–8 ore.",
+        'features.2.title': "Proiezione Trend stile CGM",
+        'features.2.desc': "5 frecce di tendenza (↓↓ calo rapido, ↓ in calo, → stabile, ↑ in rialzo, ↑↑ rialzo rapido) con offset in mg/dL per decisioni di dosaggio consapevoli.",
+        'features.3.title': "Promemoria Iniezioni Smart",
+        'features.3.desc': "Allarmi esatti per ogni dose frazionata del bolo esteso, fino a 8 ore. Perfora Non Disturbare. Azioni: Fatto / Posticipa.",
+        'features.4.title': "Integrazione Nightscout CGM",
+        'features.4.desc': "Lettura glicemia e trend in tempo reale dal tuo sito Nightscout. Un tap per compilare — niente digitazione manuale. Compatibile con Dexcom, Libre ed Eversense.",
+        'features.5.title': "Scanner Barcode Alimentare",
+        'features.5.desc': "Scansiona codici a barre con ML Kit e ottieni carboidrati, grassi e proteine dal database OpenFoodFacts. Gratuito, nessuna API key richiesta.",
+        'features.6.title': "Profili Orari",
+        'features.6.desc': "Diversi fattori di sensibilità insulinica, rapporti I:C e glicemia target per diverse ore del giorno. Il tuo corpo cambia — i parametri anche.",
+        'features.7.title': "Cloud Sync e Offline",
+        'features.7.desc': "Login Google, sincronizzazione profilo medico via Firebase Firestore. Funziona offline, sincronizza quando torni online. I tuoi dati restano tuoi.",
+        'features.8.title': "Parametri Configurabili dal Medico",
+        'features.8.desc': "Percentuale FPU, DIA, arrotondamento dose (pen 0.5 U o micro 0.1 U), tetto massimo bolo. Tutto regolabile sotto supervisione medica.",
 
-            // Integrations
-            integrations_label: 'Integrazioni',
-            integrations_title: 'Tecnologie aperte<br>e affidabili',
-            integrations_desc: 'CalcolaBolo si connette all\'ecosistema digitale per il diabete su cui fai già affidamento.',
+        'how.label': "Come Funziona",
+        'how.title': "Quattro semplici passi verso un pasto più sicuro",
+        'how.subtitle': "Dai dati del pasto a un piano insulinico completo in meno di 30 secondi.",
+        'how.1.title': "Inserisci i dati del pasto",
+        'how.1.desc': "Digita carboidrati, grassi e proteine manualmente, scansiona un codice a barre o importa la glicemia dal tuo CGM con un tap.",
+        'how.2.title': "Imposta il contesto",
+        'how.2.desc': "Seleziona la freccia di tendenza glicemica, la percentuale FPU e il metodo di somministrazione (pen o micro) per un calcolo personalizzato.",
+        'how.3.title': "Calcola",
+        'how.3.desc': "Il motore Warsaw calcola il tuo bolo immediato più un piano di bolo esteso frazionato con tempistiche esatte per ogni dose.",
+        'how.4.title': "Segui il piano",
+        'how.4.desc': "Ricevi allarmi programmati per ogni iniezione. Segna le dosi come Fatto o Posticipa — l'app ti guida fino a 8 ore.",
 
-            // CTA
-            cta_label: 'Scarica CalcolaBolo',
-            cta_title: 'Pronto per una terapia<br>insulinica di precisione?',
-            cta_desc: 'Download gratuito. Con pubblicità, rimovibile con un acquisto una tantum.<br>Nessun abbonamento. Nessuna vendita di dati.',
-            disclaimer: '<strong>Disclaimer Medico:</strong> CalcolaBolo è uno strumento di supporto decisionale e non sostituisce il parere medico professionale. Tutti i calcoli sono stime. Consulta sempre il tuo diabetologo prima di modificare la terapia insulinica. L\'app deve essere utilizzata solo sotto la guida di un professionista sanitario qualificato.',
+        'safety.label': "Sicurezza al Primo Posto",
+        'safety.title': "Dispositivi di sicurezza integrati per la massima tranquillità",
+        'safety.subtitle': "Ogni calcolo viene verificato rispetto a soglie di sicurezza configurabili prima che una dose venga suggerita.",
+        'safety.1.title': "Avviso Ipoglicemia",
+        'safety.1.desc': "Se la glicemia è sotto la soglia configurata, CalcolaBolo lo segnala e suggerisce di trattare l'ipo prima di calcolare il bolo pasto.",
+        'safety.2.title': "Tetto Massimo Bolo",
+        'safety.2.desc': "Un avviso visibile appare quando la dose calcolata supera il massimo impostato dal medico. L'app non somministra mai autonomamente — la decisione finale è sempre tua.",
+        'safety.3.title': "Consiglio Bolo Singolo",
+        'safety.3.desc': "Quando la parte estesa è ≤ 2.0 unità, l'app raccomanda una singola iniezione immediata invece di una divisione non necessaria. Più semplice, più sicuro.",
+        'safety.4.title': "Disclaimer Medico",
+        'safety.4.desc': "Un disclaimer obbligatorio al primo avvio assicura che ogni utente comprenda che CalcolaBolo è uno strumento di supporto decisionale — non un sostituto del giudizio clinico.",
 
-            // Footer
-            footer_contact: 'Contatti',
-            footer_privacy: 'Privacy Policy',
+        'integrations.label': "Integrazioni",
+        'integrations.title': "Collegati al tuo ecosistema diabete esistente",
+        'integrations.subtitle': "CalcolaBolo si connette agli strumenti che già usi — nessun giardino recintato, nessun vendor lock-in.",
+        'integrations.1.title': "Nightscout CGM",
+        'integrations.1.desc': "Glicemia e trend in tempo reale dal tuo sito Nightscout personale. Supporta Dexcom, Libre, Eversense.",
+        'integrations.2.title': "OpenFoodFacts",
+        'integrations.2.desc': "Database alimentare aperto e gratuito con macro per milioni di prodotti. Scansione barcode, nessuna API key.",
+        'integrations.3.title': "Firebase Sync",
+        'integrations.3.desc': "Il tuo profilo medico si sincronizza in modo sicuro su tutti i dispositivi. Funziona offline — sincronizza quando ti riconnetti.",
+        'integrations.4.title': "Google Sign-In",
+        'integrations.4.desc': "Autenticazione con un tap. Nessun account separato da ricordare. I tuoi dati sono legati alla tua identità, non al dispositivo.",
 
-            // Feature cards
-            f0_title: 'Formula Warsaw &amp; FPU',
-            f0_desc: 'Calcola il bolo non solo per i carboidrati, ma anche per grassi e proteine usando la formula Warsaw, clinicamente riconosciuta. Gestisce l\'"effetto pizza" — il rialzo glicemico ritardato da pasti ricchi di grassi e proteine.',
-            f1_title: 'Proiezione Trend Glicemico',
-            f1_desc: '5 frecce di tendenza stile CGM (da calo rapido a rialzo rapido) con offset in mg/dL. Combina con glicemia in tempo reale e IOB per decisioni di dosaggio informate e adattive.',
-            f2_title: 'Promemoria Iniezioni Smart',
-            f2_desc: 'Notifiche con allarme esatto per ogni iniezione frazionata del piano di bolo esteso — fino a 8 ore. Perfora Non Disturbare, con azioni Fatto e Posticipa.',
-            f3_title: 'Integrazione Nightscout CGM',
-            f3_desc: 'Leggi i valori glicemici e il trend in tempo reale direttamente dal tuo sito Nightscout. Un tap per compilare — niente digitazione manuale della glicemia.',
-            f4_title: 'Scanner Barcode Alimentare',
-            f4_desc: 'Scansiona qualsiasi codice a barre con ML Kit e ottieni istantaneamente carboidrati, grassi e proteine dal database OpenFoodFacts. Nessuna API key richiesta.',
-            f5_title: 'Profili Orari',
-            f5_desc: 'Configura diversi fattori di sensibilità insulinica, rapporti insulina/carboidrati e glicemia target per diverse ore del giorno. Il tuo corpo cambia — le impostazioni anche.',
-            f6_title: 'Sync Cloud &amp; Offline',
-            f6_desc: 'Accedi con Google e sincronizza il tuo profilo medico su Firebase Firestore. Funziona completamente offline e sincronizza in automatico quando torni online.',
-            f7_title: 'Configurabile dal Medico',
-            f7_desc: 'Percentuale FPU regolabile, DIA, arrotondamento dose (penna 0.5 U o micro 0.1 U), tetto massimo bolo — tutti parametri che il diabetologo può regolare per te.',
+        'cta.title': "Pronto per la terapia insulinica di precisione?",
+        'cta.subtitle': "Download gratuito. Supportato da pubblicità con acquisto una tantum per rimuoverla. Open source sotto GPL v3.0. Nessun abbonamento. Nessuna vendita di dati.",
+        'cta.googlePlay': "Google Play",
+        'cta.github': "Vedi su GitHub",
+        'cta.disclaimer': "<strong>Disclaimer Medico:</strong> CalcolaBolo è uno strumento di supporto decisionale e non sostituisce il parere medico professionale. Tutti i calcoli sono stime. Consulta sempre il tuo diabetologo prima di modificare la terapia insulinica.",
 
-            // Step cards
-            s0_title: 'Inserisci i Dati del Pasto',
-            s0_desc: 'Inserisci carboidrati, grassi e proteine — manualmente, tramite scansione barcode, o preleva la glicemia da Nightscout CGM',
-            s1_title: 'Imposta il Contesto',
-            s1_desc: 'Seleziona la freccia di tendenza glicemica, la percentuale FPU prescritta dal medico e il metodo di iniezione (penna o microinfusore)',
-            s2_title: 'Calcola',
-            s2_desc: 'Il motore calcola il bolo immediato (carbo + correzione − IOB) e il piano di bolo esteso con dosi frazionate',
-            s3_title: 'Segui il Piano',
-            s3_desc: 'Programma gli allarmi per ogni iniezione. Ricevi promemoria anche con Non Disturbare attivo — non perdere mai una dose frazionata',
+        'footer.github': "GitHub",
+        'footer.googlePlay': "Google Play",
+        'footer.contact': "Contatti",
+        'footer.privacy': "Privacy Policy",
+        'footer.copy': "CalcolaBolo · Open Source GPL v3.0 · &copy; 2025 Costantino Pistagna"
+      },
+      en: {
+        'meta.desc': "CalcolaBolo — Advanced insulin bolus calculator using Warsaw Formula &amp; FPU. Accounts for carbs, fat, and protein. Open source GPL v3.0.",
+        'meta.ogTitle': "CalcolaBolo — Advanced Insulin Bolus Calculator",
+        'meta.ogDesc': "Precision insulin therapy. Warsaw Formula, FPU, CGM integration. Open source.",
+        'meta.title': "CalcolaBolo — Advanced Insulin Bolus Calculator | Warsaw Formula &amp; FPU",
 
-            // Safety cards
-            sf0_title: 'Allerta Ipo',
-            sf0_desc: 'Se la glicemia è sotto la soglia di sicurezza, l\'app consiglia di trattare l\'ipoglicemia con zuccheri rapidi prima di calcolare il bolo.',
-            sf1_title: 'Tetto Massimo Bolo',
-            sf1_desc: 'Un avviso visivo appare quando la dose totale suggerita supera il massimo configurato — ma non blocca mai la somministrazione.',
-            sf2_title: 'Consiglio Bolo Singolo',
-            sf2_desc: 'Quando la parte estesa è molto piccola (≤2.0 U), l\'app consiglia un bolo normale unico — più semplice e sicuro di un frazionamento non necessario.',
-            sf3_title: 'Disclaimer Medico',
-            sf3_desc: 'Disclaimer esplicito da accettare al primo avvio. Progettato come strumento di supporto decisionale — consulta sempre il tuo diabetologo.',
+        'nav.features': "Features",
+        'nav.how': "How It Works",
+        'nav.safety': "Safety",
+        'nav.integrations': "Integrations",
+        'nav.download': "Download",
 
-            // Integration cards
-            i0_title: 'Nightscout CGM',
-            i0_desc: 'Connettiti a qualsiasi istanza Nightscout. Leggi glicemia e trend in tempo reale con supporto token di accesso opzionale.',
-            i1_title: 'OpenFoodFacts',
-            i1_desc: 'Database alimentare libero e gratuito. Scansiona codici a barre e ottieni la composizione nutrizionale — carboidrati, grassi, proteine e oltre.',
-            i2_title: 'Firebase Sync',
-            i2_desc: 'Backup cloud con Firestore. Il tuo profilo medico è cifrato in transito e accessibile solo dal tuo account Google.',
-            i3_title: 'Google Sign-In',
-            i3_desc: 'Login moderno con Credential Manager. Acquisto una tantum per rimuovere il banner pubblicitario — nessun abbonamento.',
-        },
+        'lang.it': "Italiano",
+        'lang.en': "English",
 
-        en: {
-            // Nav
-            nav_features: 'Features',
-            nav_how: 'How It Works',
-            nav_safety: 'Safety',
-            nav_integrations: 'Integrations',
-            nav_cta: 'Download',
+        'hero.badge': "Advanced Insulin Therapy",
+        'hero.headline': 'Precision <span class="gradient-text">Insulin Bolus Calculator</span>',
+        'hero.subtitle': 'Standard bolus calculators only look at carbs. But high-fat, high-protein meals cause delayed glucose spikes — the "pizza effect." CalcolaBolo uses the <strong>Warsaw Formula</strong> and <strong>Fat-Protein Units (FPU)</strong> to compute an immediate bolus plus a fractionated extended bolus with scheduled injection reminders.',
+        'hero.cta': "Get the App",
+        'hero.ctaOutline': "Explore Features",
 
-            // Hero
-            hero_badge: 'Advanced Insulin Therapy',
-            hero_title_line1: 'Precision Insulin',
-            hero_title_line2: 'Bolus Calculator',
-            hero_subtitle: 'The only advanced calculator that uses the <strong>Warsaw Formula</strong> and <strong>Fat-Protein Units (FPU)</strong> to handle complex meals. Because diabetes doesn\'t stop at carbs.',
-            hero_cta1: 'Get the App',
-            hero_cta2: 'Explore Features',
+        'phone.carbs': "Carbs",
+        'phone.fat': "Fat",
+        'phone.protein': "Protein",
+        'phone.glucose': "Glucose",
+        'phone.pen': "Pen 0.5U",
+        'phone.calculate': "Calculate",
+        'phone.immediate': "Immediate bolus",
+        'phone.extended': "Extended bolus",
+        'phone.injections': "Injections",
+        'phone.doses': "3 doses",
+        'phone.duration': "Duration",
 
-            // Mockup
-            mock_sub: 'Bolus Calculator',
-            mock_carbs: 'Carbs (g)',
-            mock_fatprot: 'Fat · Protein (g)',
-            mock_bg: 'Blood Glucose',
-            mock_pen: 'Pen',
-            mock_calc: 'Calculate Bolus',
-            mock_immediate: 'Immediate bolus',
-            mock_extended: 'Extended',
-            mock_injections: 'Injections',
-            mock_duration: 'Duration',
+        'features.label': "Features",
+        'features.title': "Everything you need for precision dosing",
+        'features.subtitle': "CalcolaBolo goes beyond carb counting. Eight powerful features designed with endocrinologists and real-world diabetes management in mind.",
+        'features.1.title': "Warsaw Formula &amp; FPU",
+        'features.1.desc': "Calculates bolus for carbs, fat, and protein — not just carbs. Handles the \"pizza effect\" with fractionated extended delivery over 3–8 hours.",
+        'features.2.title': "CGM-style Trend Projection",
+        'features.2.desc': "Five-arrow trend display (↓↓ rapid fall, ↓ falling, → stable, ↑ rising, ↑↑ rapid rise) with mg/dL offset for glucose-aware dosing decisions.",
+        'features.3.title': "Smart Injection Reminders",
+        'features.3.desc': "Exact alarms for each fractionated dose of the extended bolus, up to 8 hours. Pierces Do Not Disturb. Actions: Done / Snooze.",
+        'features.4.title': "Nightscout CGM Integration",
+        'features.4.desc': "Real-time glucose reading and trend from your Nightscout site. One-tap to populate — no manual typing. Works with Dexcom, Libre, and Eversense.",
+        'features.5.title': "Food Barcode Scanner",
+        'features.5.desc': "Scan barcodes with ML Kit and get carbs, fat, and protein from the OpenFoodFacts database. Free, no API key required.",
+        'features.6.title': "Time-of-Day Profiles",
+        'features.6.desc': "Different insulin sensitivity factors, I:C ratios, and glucose targets for different hours. Your body changes — your parameters should too.",
+        'features.7.title': "Cloud Sync &amp; Offline",
+        'features.7.desc': "Google Sign-In, medical profile sync via Firebase Firestore. Works offline, syncs when you're back online. Your data stays yours.",
+        'features.8.title': "Clinician-configurable Parameters",
+        'features.8.desc': "FPU percentage, DIA, dose rounding (pen 0.5 U or micro 0.1 U), max bolus cap. Everything adjustable under medical supervision.",
 
-            // Features
-            features_label: 'Core Features',
-            features_title: 'Everything you need<br>for precision dosing',
-            features_desc: 'CalcolaBolo goes beyond standard carb counting with clinically-grounded algorithms designed for the real-world complexity of diabetes management.',
+        'how.label': "How It Works",
+        'how.title': "Four simple steps to a safer meal",
+        'how.subtitle': "From meal data to a complete insulin plan in under 30 seconds.",
+        'how.1.title': "Enter your meal data",
+        'how.1.desc': "Type carbs, fat, and protein manually, scan a barcode, or pull glucose from your CGM with one tap.",
+        'how.2.title': "Set the context",
+        'how.2.desc': "Select your glucose trend arrow, FPU percentage, and delivery method (pen or pump) for personalized calculation.",
+        'how.3.title': "Calculate",
+        'how.3.desc': "The Warsaw engine computes your immediate bolus plus a fractionated extended bolus plan with exact dose timing.",
+        'how.4.title': "Follow the plan",
+        'how.4.desc': "Receive scheduled alarms for each injection. Mark doses as done or snooze — the app keeps you on track for up to 8 hours.",
 
-            // Steps
-            steps_label: 'How It Works',
-            steps_title: 'Four steps to a<br>precise bolus plan',
-            steps_desc: 'From meal data to injection plan in seconds. Designed for speed and safety.',
+        'safety.label': "Safety First",
+        'safety.title': "Built-in guardrails for peace of mind",
+        'safety.subtitle': "Every calculation is checked against configurable safety thresholds before a dose is ever suggested.",
+        'safety.1.title': "Hypo Warning",
+        'safety.1.desc': "If your glucose is below your configured threshold, CalcolaBolo flags it and suggests treating the hypo before calculating a meal bolus.",
+        'safety.2.title': "Max Bolus Cap",
+        'safety.2.desc': "A visible warning appears when the calculated dose exceeds your clinician-set maximum. The app never auto-administers — you always make the final call.",
+        'safety.3.title': "Single Bolus Advice",
+        'safety.3.desc': "When the extended portion is ≤ 2.0 units, the app recommends a single immediate injection instead of an unnecessary split. Simpler, safer.",
+        'safety.4.title': "Medical Disclaimer",
+        'safety.4.desc': "A mandatory disclaimer on first launch ensures every user understands CalcolaBolo is a decision-support tool — not a replacement for clinical judgment.",
 
-            // Safety
-            safety_label: 'Safety First',
-            safety_title: 'Built with clinical<br>caution in mind',
-            safety_desc: 'Medical calculation tools must be safe. CalcolaBolo includes multiple guardrails to help you avoid dosing errors.',
+        'integrations.label': "Integrations",
+        'integrations.title': "Plug into your existing diabetes toolkit",
+        'integrations.subtitle': "CalcolaBolo connects with the tools you already use — no walled garden, no vendor lock-in.",
+        'integrations.1.title': "Nightscout CGM",
+        'integrations.1.desc': "Real-time glucose &amp; trend from your personal Nightscout site. Supports Dexcom, Libre, Eversense.",
+        'integrations.2.title': "OpenFoodFacts",
+        'integrations.2.desc': "Free, open food database with macros for millions of products. Barcode scanning, no API key.",
+        'integrations.3.title': "Firebase Sync",
+        'integrations.3.desc': "Your medical profile syncs securely across devices. Works offline — syncs when you reconnect.",
+        'integrations.4.title': "Google Sign-In",
+        'integrations.4.desc': "One-tap authentication. No separate account to remember. Your data is tied to your identity, not your device.",
 
-            // Integrations
-            integrations_label: 'Integrations',
-            integrations_title: 'Powered by trusted<br>open technologies',
-            integrations_desc: 'CalcolaBolo connects to the diabetes digital ecosystem you already rely on.',
+        'cta.title': "Ready for precision insulin therapy?",
+        'cta.subtitle': "Free to download. Ad-supported with a one-time purchase to remove ads. Open source under GPL v3.0. No subscriptions. No data selling.",
+        'cta.googlePlay': "Google Play",
+        'cta.github': "View on GitHub",
+        'cta.disclaimer': "<strong>Medical Disclaimer:</strong> CalcolaBolo is a decision-support tool and does not replace professional medical advice. All calculations are estimates. Always consult your diabetologist before making changes to your insulin therapy.",
 
-            // CTA
-            cta_label: 'Get CalcolaBolo',
-            cta_title: 'Ready for precision<br>insulin therapy?',
-            cta_desc: 'Free to download. Ad-supported with a one-time purchase to remove ads.<br>No subscriptions. No data selling.',
-            disclaimer: '<strong>Medical Disclaimer:</strong> CalcolaBolo is a decision-support tool and does not replace professional medical advice. All calculations are estimates. Always consult your diabetologist before making changes to your insulin therapy. This app must only be used under the guidance of a qualified healthcare professional.',
-
-            // Footer
-            footer_contact: 'Contact',
-            footer_privacy: 'Privacy Policy',
-
-            // Feature cards
-            f0_title: 'Warsaw Formula &amp; FPU',
-            f0_desc: 'Calculate bolus not just for carbohydrates, but also for fat and protein using the clinically-recognized Warsaw Formula. Handles the "pizza effect" — delayed glucose rise from high-fat, high-protein meals.',
-            f1_title: 'Glucose Trend Projection',
-            f1_desc: '5 CGM-style trend arrows (falling fast to rising fast) with mg/dL offsets. Combine with live glucose and IOB for informed, adaptive dosing decisions.',
-            f2_title: 'Smart Injection Reminders',
-            f2_desc: 'Exact-alarm notifications for every fractioned injection in your extended bolus plan — up to 8 hours. Pierces Do Not Disturb, with Done and Snooze actions.',
-            f3_title: 'Nightscout CGM Integration',
-            f3_desc: 'Pull live glucose readings and trend data directly from your Nightscout site. One tap to fill — no manual glucose typing needed.',
-            f4_title: 'Barcode Food Scanner',
-            f4_desc: 'Scan any product barcode with ML Kit and instantly get carbs, fat, and protein from the OpenFoodFacts database. No API key needed.',
-            f5_title: 'Time-of-Day Profiles',
-            f5_desc: 'Configure different insulin sensitivity factors, carb ratios, and target glucose for different hours. Your body changes — your settings should too.',
-            f6_title: 'Cloud Sync &amp; Offline',
-            f6_desc: 'Sign in with Google and sync your medical profile to Firebase Firestore. Works fully offline and syncs automatically when you\'re back online.',
-            f7_title: 'Clinician-Configurable',
-            f7_desc: 'Adjustable FPU percentage, DIA, dose rounding (pen 0.5U or pump 0.1U), max bolus caps — all parameters your diabetologist can tune for you.',
-
-            // Step cards
-            s0_title: 'Enter Meal Data',
-            s0_desc: 'Input carbs, fat, and protein — manually, from a barcode scan, or pull glucose from Nightscout CGM',
-            s1_title: 'Set Context',
-            s1_desc: 'Select your glucose trend arrow, FPU percentage prescribed by your doctor, and injection method (pen or pump)',
-            s2_title: 'Calculate',
-            s2_desc: 'The engine computes your immediate bolus (carbs + correction − IOB) and extended bolus plan with fractionated doses',
-            s3_title: 'Follow the Plan',
-            s3_desc: 'Schedule alarms for each injection. Receive reminders even through Do Not Disturb — never miss a fractioned dose',
-
-            // Safety cards
-            sf0_title: 'Hypo Warning',
-            sf0_desc: 'If blood glucose is below your safety threshold, the app recommends treating hypoglycemia with fast-acting carbs before calculating a bolus.',
-            sf1_title: 'Max Bolus Cap',
-            sf1_desc: 'A visible warning appears when the total suggested dose exceeds your configured maximum — but never blocks you from proceeding.',
-            sf2_title: 'Single Bolus Advice',
-            sf2_desc: 'When the extended portion is very small (≤2.0 U), the app recommends a single normal bolus — simpler and safer than unnecessary fractioning.',
-            sf3_title: 'Medical Disclaimer',
-            sf3_desc: 'Explicit disclaimer must be accepted before first use. Designed as a decision-support tool — always consult your diabetologist.',
-
-            // Integration cards
-            i0_title: 'Nightscout CGM',
-            i0_desc: 'Connect to any Nightscout instance. Pull real-time glucose readings and trend data with optional access token support.',
-            i1_title: 'OpenFoodFacts',
-            i1_desc: 'Free, open food database. Scan barcodes and instantly retrieve nutritional breakdown — carbs, fat, protein, and more.',
-            i2_title: 'Firebase Sync',
-            i2_desc: 'Cloud backup with Firestore. Your medical profile is encrypted in transit and only accessible by your Google account.',
-            i3_title: 'Google Sign-In',
-            i3_desc: 'Modern login with Credential Manager. One-time purchase to remove the single banner ad — no subscriptions.',
-        }
+        'footer.github': "GitHub",
+        'footer.googlePlay': "Google Play",
+        'footer.contact': "Contact",
+        'footer.privacy': "Privacy Policy",
+        'footer.copy': "CalcolaBolo · Open Source GPL v3.0 · &copy; 2025 Costantino Pistagna"
+      }
     };
 
-    // ── Feature cards data ──
-    const featureIcons = ['🧬', '📊', '⏰', '📱', '📷', '🕐', '☁️', '🎯'];
-    const safetyIcons = ['⚠️', '🛡️', '💡', '📋'];
-    const integrationLogos = ['nightscout', 'food', 'firebase', 'play'];
-    const integrationEmojis = ['🌙', '🍎', '☁️', '🛒'];
+    // ============================== I18N SYSTEM ==============================
+    (function () {
+      var STORE_KEY = 'calcolabolo:lang';
 
-    let currentLang = localStorage.getItem('calcolabolo-lang') || 'it';
+      function detectLang() {
+        try {
+          var saved = localStorage.getItem(STORE_KEY);
+          if (saved === 'it' || saved === 'en') return saved;
+        } catch (_) {}
+        var nav = navigator.language || '';
+        if (nav.toLowerCase().startsWith('it')) return 'it';
+        return 'en';
+      }
 
-    // ── Build feature cards ──
-    function buildFeatureCards() {
-        const container = document.getElementById('features-container');
-        container.innerHTML = '';
-        for (let i = 0; i < 8; i++) {
-            const card = document.createElement('div');
-            card.className = 'feature-card reveal';
-            card.innerHTML = `
-                <div class="feature-icon">${featureIcons[i]}</div>
-                <h3 data-i18n="f${i}_title">${i18n[currentLang][`f${i}_title`]}</h3>
-                <p data-i18n="f${i}_desc">${i18n[currentLang][`f${i}_desc`]}</p>
-            `;
-            container.appendChild(card);
-        }
-    }
+      var currentLang = detectLang();
 
-    // ── Build step cards ──
-    function buildStepCards() {
-        const container = document.getElementById('steps-container');
-        container.innerHTML = '';
-        for (let i = 0; i < 4; i++) {
-            const card = document.createElement('div');
-            card.className = 'step-card reveal';
-            card.innerHTML = `
-                <div class="step-number">${i + 1}</div>
-                <h4 data-i18n="s${i}_title">${i18n[currentLang][`s${i}_title`]}</h4>
-                <p data-i18n="s${i}_desc">${i18n[currentLang][`s${i}_desc`]}</p>
-            `;
-            container.appendChild(card);
-        }
-    }
-
-    // ── Build safety cards ──
-    function buildSafetyCards() {
-        const container = document.getElementById('safety-container');
-        container.innerHTML = '';
-        for (let i = 0; i < 4; i++) {
-            const card = document.createElement('div');
-            card.className = 'safety-card reveal';
-            card.innerHTML = `
-                <div class="safety-icon">${safetyIcons[i]}</div>
-                <div>
-                    <h4 data-i18n="sf${i}_title">${i18n[currentLang][`sf${i}_title`]}</h4>
-                    <p data-i18n="sf${i}_desc">${i18n[currentLang][`sf${i}_desc`]}</p>
-                </div>
-            `;
-            container.appendChild(card);
-        }
-    }
-
-    // ── Build integration cards ──
-    function buildIntegrationCards() {
-        const container = document.getElementById('integrations-container');
-        container.innerHTML = '';
-        for (let i = 0; i < 4; i++) {
-            const card = document.createElement('div');
-            card.className = 'integration-card reveal';
-            card.innerHTML = `
-                <div class="integration-logo ${integrationLogos[i]}">${integrationEmojis[i]}</div>
-                <h4 data-i18n="i${i}_title">${i18n[currentLang][`i${i}_title`]}</h4>
-                <p data-i18n="i${i}_desc">${i18n[currentLang][`i${i}_desc`]}</p>
-            `;
-            container.appendChild(card);
-        }
-    }
-
-    // ── Switch language ──
-    function switchLang(lang) {
+      function setLang(lang) {
+        if (lang !== 'it' && lang !== 'en') return;
+        if (lang === currentLang) return;
         currentLang = lang;
-        localStorage.setItem('calcolabolo-lang', lang);
-        document.documentElement.lang = lang;
+        try { localStorage.setItem(STORE_KEY, lang); } catch (_) {}
+        applyLang();
+      }
 
-        // Update buttons
-        document.getElementById('lang-it').classList.toggle('active', lang === 'it');
-        document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+      function applyLang() {
+        var dict = I18N[currentLang] || I18N.en;
 
-        // Update og tags
-        if (lang === 'it') {
-            document.title = 'CalcolaBolo — Calcolo Bolo Insulinico';
-            document.querySelector('meta[name="description"]').setAttribute('content',
-                'CalcolaBolo — Calcolo avanzato del bolo insulinico con formula Warsaw e FPU. Integrazione Nightscout, promemoria iniezioni, database alimentare.');
-            document.querySelector('meta[property="og:title"]').setAttribute('content', 'CalcolaBolo — Calcolatore Avanzato Bolo Insulinico');
-            document.querySelector('meta[property="og:description"]').setAttribute('content',
-                'Calcolo preciso del bolo con formula Warsaw e Unità Grassi-Proteine. Nightscout CGM, scanner barcode e promemoria iniezioni intelligenti.');
-        } else {
-            document.title = 'CalcolaBolo — Advanced Insulin Bolus Calculator';
-            document.querySelector('meta[name="description"]').setAttribute('content',
-                'CalcolaBolo — Advanced insulin bolus calculator with Warsaw Formula and FPU. Nightscout integration, injection reminders, food database.');
-            document.querySelector('meta[property="og:title"]').setAttribute('content', 'CalcolaBolo — Advanced Insulin Bolus Calculator');
-            document.querySelector('meta[property="og:description"]').setAttribute('content',
-                'Precision bolus dosing with Warsaw Formula and Fat-Protein Units. Nightscout CGM, barcode food lookup, and smart injection reminders.');
+        document.documentElement.lang = currentLang;
+        document.title = dict['meta.title'] || document.title;
+
+        var metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc && dict['meta.desc']) metaDesc.setAttribute('content', dict['meta.desc']);
+
+        var ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle && dict['meta.ogTitle']) ogTitle.setAttribute('content', dict['meta.ogTitle']);
+
+        var ogDesc = document.querySelector('meta[property="og:description"]');
+        if (ogDesc && dict['meta.ogDesc']) ogDesc.setAttribute('content', dict['meta.ogDesc']);
+
+        // Update text content (data-i18n)
+        var textEls = document.querySelectorAll('[data-i18n]');
+        for (var i = 0; i < textEls.length; i++) {
+          var el = textEls[i];
+          var key = el.getAttribute('data-i18n');
+          if (key && dict[key]) el.textContent = dict[key];
         }
 
-        // Update all [data-i18n] elements
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.getAttribute('data-i18n');
-            if (i18n[lang] && i18n[lang][key]) {
-                el.innerHTML = i18n[lang][key];
-            }
+        // Update HTML content (data-i18n-html)
+        var htmlEls = document.querySelectorAll('[data-i18n-html]');
+        for (var j = 0; j < htmlEls.length; j++) {
+          var hel = htmlEls[j];
+          var hkey = hel.getAttribute('data-i18n-html');
+          if (hkey && dict[hkey]) hel.innerHTML = dict[hkey];
+        }
+
+        // Update aria-labels (data-i18n-aria)
+        var ariaEls = document.querySelectorAll('[data-i18n-aria]');
+        for (var k = 0; k < ariaEls.length; k++) {
+          var ael = ariaEls[k];
+          var akey = ael.getAttribute('data-i18n-aria');
+          if (akey && dict[akey]) ael.setAttribute('aria-label', dict[akey]);
+        }
+
+        // Highlight active language button
+        var btns = document.querySelectorAll('#lang-switch .lang-btn');
+        for (var b = 0; b < btns.length; b++) {
+          btns[b].classList.toggle('active', btns[b].getAttribute('data-lang') === currentLang);
+        }
+      }
+
+      // Language switcher click handler
+      var langBtns = document.querySelectorAll('#lang-switch .lang-btn');
+      for (var bi = 0; bi < langBtns.length; bi++) {
+        langBtns[bi].addEventListener('click', function () {
+          setLang(this.getAttribute('data-lang'));
         });
+      }
 
-        // Rebuild cards
-        buildFeatureCards();
-        buildStepCards();
-        buildSafetyCards();
-        buildIntegrationCards();
+      // Initial application
+      applyLang();
 
-        // Re-observe reveals
-        document.querySelectorAll('.reveal:not(.visible)').forEach(el => revealObserver.observe(el));
+      // Expose for potential external use
+      window.__calcolaBoloSetLang = setLang;
+      window.__calcolaBoloGetLang = function () { return currentLang; };
+    })();
+
+    // ============================== SCROLL REVEAL ==============================
+    (function () {
+      var reveals = document.querySelectorAll('.reveal');
+      var observer;
+      function callback(entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }
+      if ('IntersectionObserver' in window) {
+        observer = new IntersectionObserver(callback, {
+          threshold: 0.15,
+          rootMargin: '0px 0px -40px 0px'
+        });
+        reveals.forEach(function (el) { observer.observe(el); });
+      } else {
+        reveals.forEach(function (el) { el.classList.add('visible'); });
+      }
+    })();
+
+    // ============================== NAVBAR SCROLL EFFECT ==============================
+    (function () {
+      var navbar = document.getElementById('navbar');
+      if (!navbar) return;
+      window.addEventListener('scroll', function () {
+        if (window.scrollY > 20) {
+          navbar.classList.add('scrolled');
+        } else {
+          navbar.classList.remove('scrolled');
+        }
+      }, { passive: true });
+    })();
+  </script>
+
+
+<script data-od-snapshot-bridge="">(function(){
+  var SNAPSHOT_STYLE_PROPS = [
+    'display','position','box-sizing','width','height','min-width','max-width','min-height','max-height',
+    'margin','margin-top','margin-right','margin-bottom','margin-left',
+    'padding','padding-top','padding-right','padding-bottom','padding-left',
+    'border','border-top','border-right','border-bottom','border-left','border-radius',
+    'font','font-family','font-size','font-weight','font-style','line-height','letter-spacing',
+    'color','background-color','opacity','transform','transform-origin','overflow','overflow-x','overflow-y',
+    'white-space','text-align','vertical-align','object-fit','object-position',
+    'flex','flex-direction','flex-wrap','flex-grow','flex-shrink','flex-basis',
+    'grid','grid-template-columns','grid-template-rows','grid-column','grid-row',
+    'gap','row-gap','column-gap','align-items','align-content','align-self',
+    'justify-items','justify-content','justify-self','inset','top','right','bottom','left',
+    'z-index','box-shadow','text-shadow'
+  ];
+  function copyComputedStyle(source, target){
+    if (!source || !target || source.nodeType !== 1 || target.nodeType !== 1) return;
+    var computed = window.getComputedStyle(source);
+    var style = target.getAttribute('style') || '';
+    for (var i = 0; i < SNAPSHOT_STYLE_PROPS.length; i++){
+      var prop = SNAPSHOT_STYLE_PROPS[i];
+      var value = computed.getPropertyValue(prop);
+      if (value) style += prop + ':' + value + ';';
     }
-
-    // ── Init ──
-    document.getElementById('lang-it').addEventListener('click', () => switchLang('it'));
-    document.getElementById('lang-en').addEventListener('click', () => switchLang('en'));
-
-    // Build all card grids
-    buildFeatureCards();
-    buildStepCards();
-    buildSafetyCards();
-    buildIntegrationCards();
-
-    // ── Scroll reveal ──
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
-
-    // ── Navbar scroll effect ──
-    const nav = document.querySelector('nav');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            nav.style.background = 'rgba(255,255,255,0.95)';
-            nav.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
-        } else {
-            nav.style.background = 'rgba(255,255,255,0.82)';
-            nav.style.boxShadow = 'none';
-        }
-    });
-
-    // ── Apply saved language ──
-    switchLang(currentLang);
-    </script>
-</body>
-</html>
+    target.setAttribute('style', style);
+  }
+  function syncElementState(source, target){
+    var tag = source.tagName ? source.tagName.toLowerCase() : '';
+    if (tag === 'img' && source.currentSrc) target.setAttribute('src', source.currentSrc);
+    if (tag === 'input' || tag === 'textarea') target.setAttribute('value', source.value || '');
+    if (tag === 'canvas') {
+      try {
+        var img = document.createElement('img');
+        img.setAttribute('src', source.toDataURL('image/png'));
+        img.setAttribute('style', target.getAttribute('style') || '');
+        target.parentNode && target.parentNode.replaceChild(img, target);
+      } catch (_) {}
+    }
+  }
+  function inlineSnapshotStyles(originalRoot, cloneRoot){
+    copyComputedStyle(originalRoot, cloneRoot);
+    syncElementState(originalRoot, cloneRoot);
+    var originals = originalRoot.querySelectorAll('*');
+    var clones = cloneRoot.querySelectorAll('*');
+    var count = Math.min(originals.length, clones.length, 3500);
+    for (var i = 0; i < count; i++){
+      copyComputedStyle(originals[i], clones[i]);
+      syncElementState(originals[i], clones[i]);
+    }
+    var scripts = cloneRoot.querySelectorAll('script');
+    for (var s = scripts.length - 1; s >= 0; s--) scripts[s].remove();
+    var links = cloneRoot.querySelectorAll('link[rel~="stylesheet"], link[rel~="preload"], link[rel~="preconnect"]');
+    for (var l = links.length - 1; l >= 0; l--) links[l].remove();
+    var styles = cloneRoot.querySelectorAll('style');
+    for (var st = 0; st < styles.length; st++) {
+      styles[st].textContent = (styles[st].textContent || '')
+        .replace(/@import[^;]+;/gi, '')
+        .replace(/@font-face\s*\{[^}]*\}/gi, '');
+    }
+  }
+  function waitForImages(){
+    var imgs = Array.prototype.slice.call(document.images || []);
+    return Promise.all(imgs.map(function(img){
+      if (img.complete) return Promise.resolve();
+      return new Promise(function(resolve){
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+      });
+    }));
+  }
+  function scrollOffset(){
+    var doc = document.documentElement;
+    var body = document.body;
+    return {
+      x: Math.max(window.scrollX || 0, doc ? doc.scrollLeft || 0 : 0, body ? body.scrollLeft || 0 : 0),
+      y: Math.max(window.scrollY || 0, doc ? doc.scrollTop || 0 : 0, body ? body.scrollTop || 0 : 0)
+    };
+  }
+  function escapeAttribute(value){
+    return String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+  function renderSnapshot(id){
+    var w = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+    var h = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+    var dpr = window.devicePixelRatio || 1;
+    var docW = Math.max(w, document.documentElement.scrollWidth || 0, document.body ? document.body.scrollWidth : 0);
+    var docH = Math.max(h, document.documentElement.scrollHeight || 0, document.body ? document.body.scrollHeight : 0);
+    var clone = document.documentElement.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+    inlineSnapshotStyles(document.documentElement, clone);
+    var scroll = scrollOffset();
+    var cloneBody = clone.querySelector('body');
+    var rootStyle = clone.getAttribute('style') || '';
+    var bodyStyle = cloneBody ? cloneBody.getAttribute('style') || '' : '';
+    var bodyContent = cloneBody ? cloneBody.innerHTML : clone.innerHTML;
+    var wrapperStyle = rootStyle + bodyStyle +
+      'margin:0;position:relative;left:' + (-scroll.x) + 'px;top:' + (-scroll.y) + 'px;' +
+      'width:' + docW + 'px;height:' + docH + 'px;overflow:visible;';
+    var html = '<div xmlns="http://www.w3.org/1999/xhtml" style="' + escapeAttribute(wrapperStyle) + '">' + bodyContent + '</div>';
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
+      '<foreignObject x="0" y="0" width="' + docW + '" height="' + docH + '">' +
+      html +
+      '</foreignObject></svg>';
+    var img = new Image();
+    img.onload = function(){
+      try {
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.floor(w * dpr));
+        canvas.height = Math.max(1, Math.floor(h * dpr));
+        var ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('no 2d context');
+        ctx.scale(dpr, dpr);
+        ctx.drawImage(img, 0, 0, w, h);
+        window.parent.postMessage({ type: 'od:snapshot:result', id: id, dataUrl: canvas.toDataURL('image/png'), w: canvas.width, h: canvas.height }, '*');
+      } catch (err) {
+        window.parent.postMessage({ type: 'od:snapshot:result', id: id, error: String(err && err.message || err) }, '*');
+      }
+    };
+    function encodedSvgDataUrl(){
+      var encoded = encodeURIComponent(svg);
+      return 'data:image/svg+xml;charset=utf-8,' + encoded;
+    }
+    img.onerror = function(){
+      window.parent.postMessage({ type: 'od:snapshot:result', id: id, error: 'snapshot image failed' }, '*');
+    };
+    img.src = encodedSvgDataUrl();
+  }
+  window.addEventListener('message', function(ev){
+    var data = ev && ev.data;
+    if (!data || data.type !== 'od:snapshot' || !data.id) return;
+    waitForImages().then(function(){ renderSnapshot(String(data.id)); });
+  });
+})();</script><script data-od-srcdoc-transport-activation="">(function(){
+  window.addEventListener('message', function(ev){
+    var data = ev && ev.data;
+    if (!data || data.type !== 'od:srcdoc-transport-activate' || typeof data.html !== 'string') return;
+    document.open();
+    document.write(data.html);
+    document.close();
+  });
+})();</script></body></html>
