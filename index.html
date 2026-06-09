@@ -8,7 +8,7 @@
     <meta property="og:title" content="CalcolaBolo — Advanced Insulin Bolus Calculator">
     <meta property="og:description" content="Precision bolus dosing with Warsaw Formula and Fat-Protein Units. Nightscout CGM, barcode food lookup, and smart injection reminders.">
     <meta property="og:type" content="website">
-    <title>CalcolaBolo — Advanced Insulin Bolus Calculator</title>
+    <title>CalcolaBolo — Calcolo Bolo Insulinico</title>
     <style>
         :root {
             --primary: #0B6E4F;
@@ -93,6 +93,8 @@
             box-shadow: 0 2px 8px rgba(11,110,79,0.25);
         }
 
+        .nav-right { display: flex; align-items: center; gap: 24px; }
+
         .nav-links { display: flex; gap: 32px; list-style: none; }
         .nav-links a {
             text-decoration: none;
@@ -110,10 +112,44 @@
             border-radius: 50px;
             font-weight: 600;
             transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            font-size: 0.9rem;
         }
         .nav-cta:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 16px rgba(11,110,79,0.35);
+        }
+
+        /* ── Language Switcher ── */
+        .lang-switch {
+            display: flex;
+            background: rgba(11,110,79,0.06);
+            border-radius: 50px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .lang-switch button {
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.78rem;
+            padding: 6px 14px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            letter-spacing: 0.3px;
+        }
+
+        .lang-switch button.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .lang-switch button:hover:not(.active) {
+            color: var(--primary);
         }
 
         /* ── Hero ── */
@@ -206,7 +242,7 @@
         .hero-subtitle {
             font-size: 1.2rem;
             color: var(--text-secondary);
-            max-width: 480px;
+            max-width: 520px;
             font-weight: 400;
             animation: fadeInUp 0.6s ease 0.2s both;
         }
@@ -702,6 +738,8 @@
             .hero h1 { font-size: 2rem; }
             .hero { padding: 100px 16px 60px; min-height: auto; }
             .btn { padding: 12px 22px; font-size: 0.9rem; }
+            .lang-switch button { padding: 5px 10px; font-size: 0.72rem; }
+            .nav-cta { padding: 8px 14px; font-size: 0.8rem; }
         }
     </style>
 </head>
@@ -719,13 +757,19 @@
                 </div>
                 CalcolaBolo
             </a>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#how-it-works">How It Works</a></li>
-                <li><a href="#safety">Safety</a></li>
-                <li><a href="#integrations">Integrations</a></li>
-            </ul>
-            <a href="#download" class="nav-cta">Download</a>
+            <div class="nav-right">
+                <ul class="nav-links">
+                    <li><a href="#features" data-i18n="nav_features">Funzionalità</a></li>
+                    <li><a href="#how-it-works" data-i18n="nav_how">Come funziona</a></li>
+                    <li><a href="#safety" data-i18n="nav_safety">Sicurezza</a></li>
+                    <li><a href="#integrations" data-i18n="nav_integrations">Integrazioni</a></li>
+                </ul>
+                <div class="lang-switch">
+                    <button id="lang-it" class="active">IT</button>
+                    <button id="lang-en">EN</button>
+                </div>
+                <a href="#download" class="nav-cta" data-i18n="nav_cta">Scarica</a>
+            </div>
         </div>
     </nav>
 
@@ -737,28 +781,27 @@
         <div class="hero-content">
             <div class="hero-text">
                 <div class="hero-badge">
-                    <span class="dot"></span> Advanced Insulin Therapy
+                    <span class="dot"></span> <span data-i18n="hero_badge">Terapia Insulinica Avanzata</span>
                 </div>
                 <h1>
-                    Precision Insulin<br>
-                    <span class="highlight">Bolus Calculator</span>
+                    <span data-i18n="hero_title_line1">Precision Insulin</span><br>
+                    <span class="highlight" data-i18n="hero_title_line2">Bolus Calculator</span>
                 </h1>
-                <p class="hero-subtitle">
-                    The only open-source calculator that uses the <strong>Warsaw Formula</strong> and <strong>Fat-Protein Units (FPU)</strong>
-                    to handle complex meals. Because diabetes doesn't stop at carbs.
+                <p class="hero-subtitle" data-i18n="hero_subtitle">
+                    L'unico calcolatore avanzato che usa la <strong>formula Warsaw</strong> e le <strong>Unità Grassi-Proteine (FPU)</strong>
+                    per gestire pasti complessi. Perché il diabete non si ferma ai carboidrati.
                 </p>
                 <div class="hero-actions">
                     <a href="#download" class="btn btn-primary">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12l4 4 4-4"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
-                        Get the App
+                        <span data-i18n="hero_cta1">Scarica l'App</span>
                     </a>
                     <a href="#features" class="btn btn-outline">
-                        Explore Features
+                        <span data-i18n="hero_cta2">Esplora Funzionalità</span>
                     </a>
                 </div>
             </div>
             <div class="hero-visual">
-                <!-- Phone mockup -->
                 <div class="phone-mockup">
                     <div class="phone-screen">
                         <div class="mock-status">9:41 &nbsp; █████ &nbsp; &nbsp; ███</div>
@@ -766,34 +809,34 @@
                             <div class="mock-app-icon"></div>
                             <div>
                                 <div class="mock-app-title">CalcolaBolo</div>
-                                <div class="mock-app-sub">Bolus Calculator</div>
+                                <div class="mock-app-sub" data-i18n="mock_sub">Bolus Calculator</div>
                             </div>
                         </div>
                         <div class="mock-field">
-                            <div class="mock-field-label">Carbs (g)</div>
+                            <div class="mock-field-label" data-i18n="mock_carbs">Carboidrati (g)</div>
                             <div class="mock-field-val">75</div>
                         </div>
                         <div class="mock-field">
-                            <div class="mock-field-label">Fat · Protein (g)</div>
+                            <div class="mock-field-label" data-i18n="mock_fatprot">Grassi · Proteine (g)</div>
                             <div class="mock-field-val">32 · 28</div>
                         </div>
                         <div class="mock-field">
-                            <div class="mock-field-label">Blood Glucose</div>
+                            <div class="mock-field-label" data-i18n="mock_bg">Glicemia</div>
                             <div class="mock-field-val">142 mg/dL →</div>
                         </div>
                         <div class="mock-chips">
                             <span class="mock-chip active">FPU 75%</span>
-                            <span class="mock-chip">Pen</span>
+                            <span class="mock-chip" data-i18n="mock_pen">Penna</span>
                             <span class="mock-chip">60 min</span>
                         </div>
-                        <div class="mock-btn">Calculate Bolus</div>
+                        <div class="mock-btn" data-i18n="mock_calc">Calcola Bolo</div>
                         <div class="mock-card">
                             <div class="dose">4.5 U</div>
-                            <div class="label">Immediate bolus</div>
+                            <div class="label" data-i18n="mock_immediate">Bolo immediato</div>
                             <div style="display:flex;gap:8px;margin-top:6px;">
-                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">2.0</span><div class="label">Extended</div></div>
-                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">4</span><div class="label">Injections</div></div>
-                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">6h</span><div class="label">Duration</div></div>
+                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">2.0</span><div class="label" data-i18n="mock_extended">Esteso</div></div>
+                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">4</span><div class="label" data-i18n="mock_injections">Iniezioni</div></div>
+                                <div style="flex:1"><span class="dose" style="font-size:1.1rem">6h</span><div class="label" data-i18n="mock_duration">Durata</div></div>
                             </div>
                         </div>
                     </div>
@@ -805,189 +848,74 @@
     <!-- ── Features ── -->
     <section id="features">
         <div class="section-inner">
-            <div class="section-label reveal">Core Features</div>
-            <h2 class="section-title reveal">Everything you need<br>for precision dosing</h2>
-            <p class="section-desc reveal">
-                CalcolaBolo goes beyond standard carb counting with clinically-grounded algorithms
-                designed for the real-world complexity of diabetes management.
+            <div class="section-label reveal" data-i18n="features_label">Funzionalità Principali</div>
+            <h2 class="section-title reveal" data-i18n="features_title">Tutto ciò che serve<br>per un dosaggio preciso</h2>
+            <p class="section-desc reveal" data-i18n="features_desc">
+                CalcolaBolo va oltre il conteggio dei carboidrati con algoritmi clinicamente fondati,
+                progettati per la complessità reale della gestione del diabete.
             </p>
-            <div class="features-grid">
-                <div class="feature-card reveal">
-                    <div class="feature-icon">🧬</div>
-                    <h3>Warsaw Formula &amp; FPU</h3>
-                    <p>Calculate bolus not just for carbohydrates, but also for fat and protein using the clinically-recognized Warsaw Formula. Handles the "pizza effect" — delayed glucose rise from high-fat, high-protein meals.</p>
-                </div>
-                <div class="feature-card reveal">
-                    <div class="feature-icon">📊</div>
-                    <h3>Glucose Trend Projection</h3>
-                    <p>5 CGM-style trend arrows (falling fast to rising fast) with mg/dL offsets. Combine with live glucose and IOB for informed, adaptive dosing decisions.</p>
-                </div>
-                <div class="feature-card reveal">
-                    <div class="feature-icon">⏰</div>
-                    <h3>Smart Injection Reminders</h3>
-                    <p>Exact-alarm notifications for every fractioned injection in your extended bolus plan — up to 8 hours. Pierces Do Not Disturb, with Done and Snooze actions.</p>
-                </div>
-                <div class="feature-card reveal">
-                    <div class="feature-icon">📱</div>
-                    <h3>Nightscout CGM Integration</h3>
-                    <p>Pull live glucose readings and trend data directly from your Nightscout site. One tap to fill — no manual glucose typing needed.</p>
-                </div>
-                <div class="feature-card reveal">
-                    <div class="feature-icon">📷</div>
-                    <h3>Barcode Food Scanner</h3>
-                    <p>Scan any product barcode with ML Kit and instantly get carbs, fat, and protein from the OpenFoodFacts database. No API key needed.</p>
-                </div>
-                <div class="feature-card reveal">
-                    <div class="feature-icon">🕐</div>
-                    <h3>Time-of-Day Profiles</h3>
-                    <p>Configure different insulin sensitivity factors, carb ratios, and target glucose for different hours. Your body changes — your settings should too.</p>
-                </div>
-                <div class="feature-card reveal">
-                    <div class="feature-icon">☁️</div>
-                    <h3>Cloud Sync &amp; Offline</h3>
-                    <p>Sign in with Google and sync your medical profile to Firebase. Works fully offline and syncs automatically when you're back online.</p>
-                </div>
-                <div class="feature-card reveal">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Clinician-Configurable</h3>
-                    <p>Adjustable FPU percentage, DIA, dose rounding (pen 0.5U or pump 0.1U), max bolus caps — all parameters your diabetologist can tune for you.</p>
-                </div>
-            </div>
+            <div class="features-grid" id="features-container"></div>
         </div>
     </section>
 
     <!-- ── How It Works ── -->
     <section id="how-it-works">
         <div class="section-inner">
-            <div class="section-label reveal">How It Works</div>
-            <h2 class="section-title reveal">Four steps to a<br>precise bolus plan</h2>
-            <p class="section-desc reveal">
-                From meal data to injection plan in seconds. Designed for speed and safety.
+            <div class="section-label reveal" data-i18n="steps_label">Come Funziona</div>
+            <h2 class="section-title reveal" data-i18n="steps_title">Quattro passi verso<br>un piano di bolo preciso</h2>
+            <p class="section-desc reveal" data-i18n="steps_desc">
+                Dai dati del pasto al piano di iniezione in pochi secondi. Progettato per velocità e sicurezza.
             </p>
-            <div class="steps-grid">
-                <div class="step-card reveal">
-                    <div class="step-number">1</div>
-                    <h4>Enter Meal Data</h4>
-                    <p>Input carbs, fat, and protein — manually, from a barcode scan, or pull glucose from Nightscout CGM</p>
-                </div>
-                <div class="step-card reveal">
-                    <div class="step-number">2</div>
-                    <h4>Set Context</h4>
-                    <p>Select your glucose trend arrow, FPU percentage prescribed by your doctor, and injection method (pen or pump)</p>
-                </div>
-                <div class="step-card reveal">
-                    <div class="step-number">3</div>
-                    <h4>Calculate</h4>
-                    <p>The engine computes your immediate bolus (carbs + correction − IOB) and extended bolus plan with fractionated doses</p>
-                </div>
-                <div class="step-card reveal">
-                    <div class="step-number">4</div>
-                    <h4>Follow the Plan</h4>
-                    <p>Schedule alarms for each injection. Receive reminders even through Do Not Disturb — never miss a fractioned dose</p>
-                </div>
-            </div>
+            <div class="steps-grid" id="steps-container"></div>
         </div>
     </section>
 
     <!-- ── Safety ── -->
     <section id="safety">
         <div class="section-inner">
-            <div class="section-label reveal">Safety First</div>
-            <h2 class="section-title reveal">Built with clinical<br>caution in mind</h2>
-            <p class="section-desc reveal">
-                Medical calculation tools must be safe. CalcolaBolo includes multiple guardrails to help you avoid dosing errors.
+            <div class="section-label reveal" data-i18n="safety_label">Sicurezza al Primo Posto</div>
+            <h2 class="section-title reveal" data-i18n="safety_title">Progettato con<br>cautela clinica</h2>
+            <p class="section-desc reveal" data-i18n="safety_desc">
+                Gli strumenti di calcolo medico devono essere sicuri. CalcolaBolo include molteplici
+                protezioni per aiutarti a evitare errori di dosaggio.
             </p>
-            <div class="safety-grid">
-                <div class="safety-card reveal">
-                    <div class="safety-icon">⚠️</div>
-                    <div>
-                        <h4>Hypo Warning</h4>
-                        <p>If blood glucose is below your safety threshold, the app recommends treating hypoglycemia with fast-acting carbs before calculating a bolus.</p>
-                    </div>
-                </div>
-                <div class="safety-card reveal">
-                    <div class="safety-icon">🛡️</div>
-                    <div>
-                        <h4>Max Bolus Cap</h4>
-                        <p>A visible warning appears when the total suggested dose exceeds your configured maximum — but never blocks you from proceeding.</p>
-                    </div>
-                </div>
-                <div class="safety-card reveal">
-                    <div class="safety-icon">💡</div>
-                    <div>
-                        <h4>Single Bolus Advice</h4>
-                        <p>When the extended portion is very small (≤2.0 U), the app recommends a single normal bolus — simpler and safer than unnecessary fractioning.</p>
-                    </div>
-                </div>
-                <div class="safety-card reveal">
-                    <div class="safety-icon">📋</div>
-                    <div>
-                        <h4>Medical Disclaimer</h4>
-                        <p>Explicit disclaimer must be accepted before first use. Designed as a decision-support tool — always consult your diabetologist.</p>
-                    </div>
-                </div>
-            </div>
+            <div class="safety-grid" id="safety-container"></div>
         </div>
     </section>
 
     <!-- ── Integrations ── -->
     <section id="integrations">
         <div class="section-inner">
-            <div class="section-label reveal">Integrations</div>
-            <h2 class="section-title reveal">Powered by trusted<br>open technologies</h2>
-            <p class="section-desc reveal">
-                CalcolaBolo connects to the diabetes ecosystem you already rely on.
+            <div class="section-label reveal" data-i18n="integrations_label">Integrazioni</div>
+            <h2 class="section-title reveal" data-i18n="integrations_title">Tecnologie aperte<br>e affidabili</h2>
+            <p class="section-desc reveal" data-i18n="integrations_desc">
+                CalcolaBolo si connette all'ecosistema digitale per il diabete su cui fai già affidamento.
             </p>
-            <div class="integrations-grid">
-                <div class="integration-card reveal">
-                    <div class="integration-logo nightscout">🌙</div>
-                    <h4>Nightscout CGM</h4>
-                    <p>Connect to any Nightscout instance. Pull real-time glucose readings and trend data with optional access token support.</p>
-                </div>
-                <div class="integration-card reveal">
-                    <div class="integration-logo food">🍎</div>
-                    <h4>OpenFoodFacts</h4>
-                    <p>Free, open food database. Scan barcodes and instantly retrieve nutritional breakdown — carbs, fat, protein, and more.</p>
-                </div>
-                <div class="integration-card reveal">
-                    <div class="integration-logo firebase">☁️</div>
-                    <h4>Firebase Sync</h4>
-                    <p>Cloud backup with Firestore. Your medical profile is encrypted in transit and only accessible by your Google account.</p>
-                </div>
-                <div class="integration-card reveal">
-                    <div class="integration-logo play">🛒</div>
-                    <h4>Google Sign-In</h4>
-                    <p>Modern login with Credential Manager. One-time purchase to remove the single banner ad — no subscriptions.</p>
-                </div>
-            </div>
+            <div class="integrations-grid" id="integrations-container"></div>
         </div>
     </section>
 
     <!-- ── Download CTA ── -->
     <section id="download">
         <div class="section-inner">
-            <div class="section-label reveal">Get CalcolaBolo</div>
-            <h2 class="section-title reveal">Ready for precision<br>insulin therapy?</h2>
-            <p class="section-desc reveal">
-                Free to download. Ad-supported with a one-time purchase to remove ads.<br>
-                Open source. No subscriptions. No data selling.
+            <div class="section-label reveal" data-i18n="cta_label">Scarica CalcolaBolo</div>
+            <h2 class="section-title reveal" data-i18n="cta_title">Pronto per una terapia<br>insulinica di precisione?</h2>
+            <p class="section-desc reveal" data-i18n="cta_desc">
+                Download gratuito. Con pubblicità, rimovibile con un acquisto una tantum.<br>
+                Nessun abbonamento. Nessuna vendita di dati.
             </p>
             <div class="download-options reveal">
                 <a href="https://play.google.com/store/apps/details?id=com.costa.calcolabolo" class="btn-download" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 1.6L14.8 12 3.6 22.4C2.6 21.5 2 20.2 2 19V5c0-1.2.6-2.5 1.6-3.4z"/><path d="M17.5 10.5l-2.7-2.3L3.6 1.6C4.3 1.2 5.1 1 6 1c1.1 0 2.1.4 2.9 1.1L17.5 7.5c.7.5 1.1 1.3 1.1 2.1s-.4 1.6-1.1 2.1l-3.1 2.2-2.7-2.3 2.7-2.3 3.1 2.2c.7.5 1.1 1.3 1.1 2.1s-.4 1.6-1.1 2.1l-.1.1-5.6-4.7-5.6 4.7-3.1-2.2c-.7-.5-1.1-1.3-1.1-2.1s.4-1.6 1.1-2.1l3.1-2.2 5.6 4.7 5.6-4.7z"/></svg>
                     Google Play
                 </a>
-                <a href="https://github.com/valhalla94/CalcolaBolo" class="btn-download" target="_blank" rel="noopener" style="background:rgba(255,255,255,0.12);color:#fff;">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.137 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-                    View on GitHub
-                </a>
             </div>
             <div class="disclaimer-bar reveal">
                 <span class="warn-icon">⚕️</span>
-                <span>
-                    <strong>Medical Disclaimer:</strong> CalcolaBolo is a decision-support tool and does not replace professional medical advice.
-                    All calculations are estimates. Always consult your diabetologist before making changes to your insulin therapy.
-                    This app must only be used under the guidance of a qualified healthcare professional.
+                <span data-i18n="disclaimer">
+                    <strong>Disclaimer Medico:</strong> CalcolaBolo è uno strumento di supporto decisionale e non
+                    sostituisce il parere medico professionale. Tutti i calcoli sono stime. Consulta sempre il tuo
+                    diabetologo prima di modificare la terapia insulinica.
                 </span>
             </div>
         </div>
@@ -997,42 +925,390 @@
     <footer>
         <div class="footer-inner">
             <div class="footer-links">
-                <a href="https://github.com/valhalla94/CalcolaBolo" target="_blank" rel="noopener">GitHub</a>
                 <a href="https://play.google.com/store/apps/details?id=com.costa.calcolabolo" target="_blank" rel="noopener">Google Play</a>
-                <a href="mailto:costantinop.dev@gmail.com">Contact</a>
-                <a href="#">Privacy Policy</a>
+                <a href="mailto:costantinop.dev@gmail.com" data-i18n="footer_contact">Contatti</a>
+                <a href="#" data-i18n="footer_privacy">Privacy Policy</a>
             </div>
             <div class="footer-divider"></div>
             <p class="footer-copy">
-                CalcolaBolo · Open Source under GNU General Public License v3.0<br>
-                &copy; 2025 Costantino Pistagna. All rights reserved.
+                CalcolaBolo<br>
+                &copy; 2025 Costantino Pistagna. Tutti i diritti riservati.
             </p>
         </div>
     </footer>
 
     <script>
-        // Scroll reveal animation
-        const revealObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    // ── i18n Data ──
+    const i18n = {
+        it: {
+            // Nav
+            nav_features: 'Funzionalità',
+            nav_how: 'Come funziona',
+            nav_safety: 'Sicurezza',
+            nav_integrations: 'Integrazioni',
+            nav_cta: 'Scarica',
 
-        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+            // Hero
+            hero_badge: 'Terapia Insulinica Avanzata',
+            hero_title_line1: 'Precision Insulin',
+            hero_title_line2: 'Bolus Calculator',
+            hero_subtitle: 'L\'unico calcolatore avanzato che usa la <strong>formula Warsaw</strong> e le <strong>Unità Grassi-Proteine (FPU)</strong> per gestire pasti complessi. Perché il diabete non si ferma ai carboidrati.',
+            hero_cta1: 'Scarica l\'App',
+            hero_cta2: 'Esplora Funzionalità',
 
-        // Navbar background on scroll
-        const nav = document.querySelector('nav');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                nav.style.background = 'rgba(255,255,255,0.95)';
-                nav.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
-            } else {
-                nav.style.background = 'rgba(255,255,255,0.82)';
-                nav.style.boxShadow = 'none';
+            // Mockup
+            mock_sub: 'Calcolo Bolo',
+            mock_carbs: 'Carboidrati (g)',
+            mock_fatprot: 'Grassi · Proteine (g)',
+            mock_bg: 'Glicemia',
+            mock_pen: 'Penna',
+            mock_calc: 'Calcola Bolo',
+            mock_immediate: 'Bolo immediato',
+            mock_extended: 'Esteso',
+            mock_injections: 'Iniezioni',
+            mock_duration: 'Durata',
+
+            // Features
+            features_label: 'Funzionalità Principali',
+            features_title: 'Tutto ciò che serve<br>per un dosaggio preciso',
+            features_desc: 'CalcolaBolo va oltre il conteggio dei carboidrati con algoritmi clinicamente fondati, progettati per la complessità reale della gestione del diabete.',
+
+            // Steps
+            steps_label: 'Come Funziona',
+            steps_title: 'Quattro passi verso<br>un piano di bolo preciso',
+            steps_desc: 'Dai dati del pasto al piano di iniezione in pochi secondi. Progettato per velocità e sicurezza.',
+
+            // Safety
+            safety_label: 'Sicurezza al Primo Posto',
+            safety_title: 'Progettato con<br>cautela clinica',
+            safety_desc: 'Gli strumenti di calcolo medico devono essere sicuri. CalcolaBolo include molteplici protezioni per aiutarti a evitare errori di dosaggio.',
+
+            // Integrations
+            integrations_label: 'Integrazioni',
+            integrations_title: 'Tecnologie aperte<br>e affidabili',
+            integrations_desc: 'CalcolaBolo si connette all\'ecosistema digitale per il diabete su cui fai già affidamento.',
+
+            // CTA
+            cta_label: 'Scarica CalcolaBolo',
+            cta_title: 'Pronto per una terapia<br>insulinica di precisione?',
+            cta_desc: 'Download gratuito. Con pubblicità, rimovibile con un acquisto una tantum.<br>Nessun abbonamento. Nessuna vendita di dati.',
+            disclaimer: '<strong>Disclaimer Medico:</strong> CalcolaBolo è uno strumento di supporto decisionale e non sostituisce il parere medico professionale. Tutti i calcoli sono stime. Consulta sempre il tuo diabetologo prima di modificare la terapia insulinica. L\'app deve essere utilizzata solo sotto la guida di un professionista sanitario qualificato.',
+
+            // Footer
+            footer_contact: 'Contatti',
+            footer_privacy: 'Privacy Policy',
+
+            // Feature cards
+            f0_title: 'Formula Warsaw &amp; FPU',
+            f0_desc: 'Calcola il bolo non solo per i carboidrati, ma anche per grassi e proteine usando la formula Warsaw, clinicamente riconosciuta. Gestisce l\'"effetto pizza" — il rialzo glicemico ritardato da pasti ricchi di grassi e proteine.',
+            f1_title: 'Proiezione Trend Glicemico',
+            f1_desc: '5 frecce di tendenza stile CGM (da calo rapido a rialzo rapido) con offset in mg/dL. Combina con glicemia in tempo reale e IOB per decisioni di dosaggio informate e adattive.',
+            f2_title: 'Promemoria Iniezioni Smart',
+            f2_desc: 'Notifiche con allarme esatto per ogni iniezione frazionata del piano di bolo esteso — fino a 8 ore. Perfora Non Disturbare, con azioni Fatto e Posticipa.',
+            f3_title: 'Integrazione Nightscout CGM',
+            f3_desc: 'Leggi i valori glicemici e il trend in tempo reale direttamente dal tuo sito Nightscout. Un tap per compilare — niente digitazione manuale della glicemia.',
+            f4_title: 'Scanner Barcode Alimentare',
+            f4_desc: 'Scansiona qualsiasi codice a barre con ML Kit e ottieni istantaneamente carboidrati, grassi e proteine dal database OpenFoodFacts. Nessuna API key richiesta.',
+            f5_title: 'Profili Orari',
+            f5_desc: 'Configura diversi fattori di sensibilità insulinica, rapporti insulina/carboidrati e glicemia target per diverse ore del giorno. Il tuo corpo cambia — le impostazioni anche.',
+            f6_title: 'Sync Cloud &amp; Offline',
+            f6_desc: 'Accedi con Google e sincronizza il tuo profilo medico su Firebase Firestore. Funziona completamente offline e sincronizza in automatico quando torni online.',
+            f7_title: 'Configurabile dal Medico',
+            f7_desc: 'Percentuale FPU regolabile, DIA, arrotondamento dose (penna 0.5 U o micro 0.1 U), tetto massimo bolo — tutti parametri che il diabetologo può regolare per te.',
+
+            // Step cards
+            s0_title: 'Inserisci i Dati del Pasto',
+            s0_desc: 'Inserisci carboidrati, grassi e proteine — manualmente, tramite scansione barcode, o preleva la glicemia da Nightscout CGM',
+            s1_title: 'Imposta il Contesto',
+            s1_desc: 'Seleziona la freccia di tendenza glicemica, la percentuale FPU prescritta dal medico e il metodo di iniezione (penna o microinfusore)',
+            s2_title: 'Calcola',
+            s2_desc: 'Il motore calcola il bolo immediato (carbo + correzione − IOB) e il piano di bolo esteso con dosi frazionate',
+            s3_title: 'Segui il Piano',
+            s3_desc: 'Programma gli allarmi per ogni iniezione. Ricevi promemoria anche con Non Disturbare attivo — non perdere mai una dose frazionata',
+
+            // Safety cards
+            sf0_title: 'Allerta Ipo',
+            sf0_desc: 'Se la glicemia è sotto la soglia di sicurezza, l\'app consiglia di trattare l\'ipoglicemia con zuccheri rapidi prima di calcolare il bolo.',
+            sf1_title: 'Tetto Massimo Bolo',
+            sf1_desc: 'Un avviso visivo appare quando la dose totale suggerita supera il massimo configurato — ma non blocca mai la somministrazione.',
+            sf2_title: 'Consiglio Bolo Singolo',
+            sf2_desc: 'Quando la parte estesa è molto piccola (≤2.0 U), l\'app consiglia un bolo normale unico — più semplice e sicuro di un frazionamento non necessario.',
+            sf3_title: 'Disclaimer Medico',
+            sf3_desc: 'Disclaimer esplicito da accettare al primo avvio. Progettato come strumento di supporto decisionale — consulta sempre il tuo diabetologo.',
+
+            // Integration cards
+            i0_title: 'Nightscout CGM',
+            i0_desc: 'Connettiti a qualsiasi istanza Nightscout. Leggi glicemia e trend in tempo reale con supporto token di accesso opzionale.',
+            i1_title: 'OpenFoodFacts',
+            i1_desc: 'Database alimentare libero e gratuito. Scansiona codici a barre e ottieni la composizione nutrizionale — carboidrati, grassi, proteine e oltre.',
+            i2_title: 'Firebase Sync',
+            i2_desc: 'Backup cloud con Firestore. Il tuo profilo medico è cifrato in transito e accessibile solo dal tuo account Google.',
+            i3_title: 'Google Sign-In',
+            i3_desc: 'Login moderno con Credential Manager. Acquisto una tantum per rimuovere il banner pubblicitario — nessun abbonamento.',
+        },
+
+        en: {
+            // Nav
+            nav_features: 'Features',
+            nav_how: 'How It Works',
+            nav_safety: 'Safety',
+            nav_integrations: 'Integrations',
+            nav_cta: 'Download',
+
+            // Hero
+            hero_badge: 'Advanced Insulin Therapy',
+            hero_title_line1: 'Precision Insulin',
+            hero_title_line2: 'Bolus Calculator',
+            hero_subtitle: 'The only advanced calculator that uses the <strong>Warsaw Formula</strong> and <strong>Fat-Protein Units (FPU)</strong> to handle complex meals. Because diabetes doesn\'t stop at carbs.',
+            hero_cta1: 'Get the App',
+            hero_cta2: 'Explore Features',
+
+            // Mockup
+            mock_sub: 'Bolus Calculator',
+            mock_carbs: 'Carbs (g)',
+            mock_fatprot: 'Fat · Protein (g)',
+            mock_bg: 'Blood Glucose',
+            mock_pen: 'Pen',
+            mock_calc: 'Calculate Bolus',
+            mock_immediate: 'Immediate bolus',
+            mock_extended: 'Extended',
+            mock_injections: 'Injections',
+            mock_duration: 'Duration',
+
+            // Features
+            features_label: 'Core Features',
+            features_title: 'Everything you need<br>for precision dosing',
+            features_desc: 'CalcolaBolo goes beyond standard carb counting with clinically-grounded algorithms designed for the real-world complexity of diabetes management.',
+
+            // Steps
+            steps_label: 'How It Works',
+            steps_title: 'Four steps to a<br>precise bolus plan',
+            steps_desc: 'From meal data to injection plan in seconds. Designed for speed and safety.',
+
+            // Safety
+            safety_label: 'Safety First',
+            safety_title: 'Built with clinical<br>caution in mind',
+            safety_desc: 'Medical calculation tools must be safe. CalcolaBolo includes multiple guardrails to help you avoid dosing errors.',
+
+            // Integrations
+            integrations_label: 'Integrations',
+            integrations_title: 'Powered by trusted<br>open technologies',
+            integrations_desc: 'CalcolaBolo connects to the diabetes digital ecosystem you already rely on.',
+
+            // CTA
+            cta_label: 'Get CalcolaBolo',
+            cta_title: 'Ready for precision<br>insulin therapy?',
+            cta_desc: 'Free to download. Ad-supported with a one-time purchase to remove ads.<br>No subscriptions. No data selling.',
+            disclaimer: '<strong>Medical Disclaimer:</strong> CalcolaBolo is a decision-support tool and does not replace professional medical advice. All calculations are estimates. Always consult your diabetologist before making changes to your insulin therapy. This app must only be used under the guidance of a qualified healthcare professional.',
+
+            // Footer
+            footer_contact: 'Contact',
+            footer_privacy: 'Privacy Policy',
+
+            // Feature cards
+            f0_title: 'Warsaw Formula &amp; FPU',
+            f0_desc: 'Calculate bolus not just for carbohydrates, but also for fat and protein using the clinically-recognized Warsaw Formula. Handles the "pizza effect" — delayed glucose rise from high-fat, high-protein meals.',
+            f1_title: 'Glucose Trend Projection',
+            f1_desc: '5 CGM-style trend arrows (falling fast to rising fast) with mg/dL offsets. Combine with live glucose and IOB for informed, adaptive dosing decisions.',
+            f2_title: 'Smart Injection Reminders',
+            f2_desc: 'Exact-alarm notifications for every fractioned injection in your extended bolus plan — up to 8 hours. Pierces Do Not Disturb, with Done and Snooze actions.',
+            f3_title: 'Nightscout CGM Integration',
+            f3_desc: 'Pull live glucose readings and trend data directly from your Nightscout site. One tap to fill — no manual glucose typing needed.',
+            f4_title: 'Barcode Food Scanner',
+            f4_desc: 'Scan any product barcode with ML Kit and instantly get carbs, fat, and protein from the OpenFoodFacts database. No API key needed.',
+            f5_title: 'Time-of-Day Profiles',
+            f5_desc: 'Configure different insulin sensitivity factors, carb ratios, and target glucose for different hours. Your body changes — your settings should too.',
+            f6_title: 'Cloud Sync &amp; Offline',
+            f6_desc: 'Sign in with Google and sync your medical profile to Firebase Firestore. Works fully offline and syncs automatically when you\'re back online.',
+            f7_title: 'Clinician-Configurable',
+            f7_desc: 'Adjustable FPU percentage, DIA, dose rounding (pen 0.5U or pump 0.1U), max bolus caps — all parameters your diabetologist can tune for you.',
+
+            // Step cards
+            s0_title: 'Enter Meal Data',
+            s0_desc: 'Input carbs, fat, and protein — manually, from a barcode scan, or pull glucose from Nightscout CGM',
+            s1_title: 'Set Context',
+            s1_desc: 'Select your glucose trend arrow, FPU percentage prescribed by your doctor, and injection method (pen or pump)',
+            s2_title: 'Calculate',
+            s2_desc: 'The engine computes your immediate bolus (carbs + correction − IOB) and extended bolus plan with fractionated doses',
+            s3_title: 'Follow the Plan',
+            s3_desc: 'Schedule alarms for each injection. Receive reminders even through Do Not Disturb — never miss a fractioned dose',
+
+            // Safety cards
+            sf0_title: 'Hypo Warning',
+            sf0_desc: 'If blood glucose is below your safety threshold, the app recommends treating hypoglycemia with fast-acting carbs before calculating a bolus.',
+            sf1_title: 'Max Bolus Cap',
+            sf1_desc: 'A visible warning appears when the total suggested dose exceeds your configured maximum — but never blocks you from proceeding.',
+            sf2_title: 'Single Bolus Advice',
+            sf2_desc: 'When the extended portion is very small (≤2.0 U), the app recommends a single normal bolus — simpler and safer than unnecessary fractioning.',
+            sf3_title: 'Medical Disclaimer',
+            sf3_desc: 'Explicit disclaimer must be accepted before first use. Designed as a decision-support tool — always consult your diabetologist.',
+
+            // Integration cards
+            i0_title: 'Nightscout CGM',
+            i0_desc: 'Connect to any Nightscout instance. Pull real-time glucose readings and trend data with optional access token support.',
+            i1_title: 'OpenFoodFacts',
+            i1_desc: 'Free, open food database. Scan barcodes and instantly retrieve nutritional breakdown — carbs, fat, protein, and more.',
+            i2_title: 'Firebase Sync',
+            i2_desc: 'Cloud backup with Firestore. Your medical profile is encrypted in transit and only accessible by your Google account.',
+            i3_title: 'Google Sign-In',
+            i3_desc: 'Modern login with Credential Manager. One-time purchase to remove the single banner ad — no subscriptions.',
+        }
+    };
+
+    // ── Feature cards data ──
+    const featureIcons = ['🧬', '📊', '⏰', '📱', '📷', '🕐', '☁️', '🎯'];
+    const safetyIcons = ['⚠️', '🛡️', '💡', '📋'];
+    const integrationLogos = ['nightscout', 'food', 'firebase', 'play'];
+    const integrationEmojis = ['🌙', '🍎', '☁️', '🛒'];
+
+    let currentLang = localStorage.getItem('calcolabolo-lang') || 'it';
+
+    // ── Build feature cards ──
+    function buildFeatureCards() {
+        const container = document.getElementById('features-container');
+        container.innerHTML = '';
+        for (let i = 0; i < 8; i++) {
+            const card = document.createElement('div');
+            card.className = 'feature-card reveal';
+            card.innerHTML = `
+                <div class="feature-icon">${featureIcons[i]}</div>
+                <h3 data-i18n="f${i}_title">${i18n[currentLang][`f${i}_title`]}</h3>
+                <p data-i18n="f${i}_desc">${i18n[currentLang][`f${i}_desc`]}</p>
+            `;
+            container.appendChild(card);
+        }
+    }
+
+    // ── Build step cards ──
+    function buildStepCards() {
+        const container = document.getElementById('steps-container');
+        container.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const card = document.createElement('div');
+            card.className = 'step-card reveal';
+            card.innerHTML = `
+                <div class="step-number">${i + 1}</div>
+                <h4 data-i18n="s${i}_title">${i18n[currentLang][`s${i}_title`]}</h4>
+                <p data-i18n="s${i}_desc">${i18n[currentLang][`s${i}_desc`]}</p>
+            `;
+            container.appendChild(card);
+        }
+    }
+
+    // ── Build safety cards ──
+    function buildSafetyCards() {
+        const container = document.getElementById('safety-container');
+        container.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const card = document.createElement('div');
+            card.className = 'safety-card reveal';
+            card.innerHTML = `
+                <div class="safety-icon">${safetyIcons[i]}</div>
+                <div>
+                    <h4 data-i18n="sf${i}_title">${i18n[currentLang][`sf${i}_title`]}</h4>
+                    <p data-i18n="sf${i}_desc">${i18n[currentLang][`sf${i}_desc`]}</p>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+    }
+
+    // ── Build integration cards ──
+    function buildIntegrationCards() {
+        const container = document.getElementById('integrations-container');
+        container.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const card = document.createElement('div');
+            card.className = 'integration-card reveal';
+            card.innerHTML = `
+                <div class="integration-logo ${integrationLogos[i]}">${integrationEmojis[i]}</div>
+                <h4 data-i18n="i${i}_title">${i18n[currentLang][`i${i}_title`]}</h4>
+                <p data-i18n="i${i}_desc">${i18n[currentLang][`i${i}_desc`]}</p>
+            `;
+            container.appendChild(card);
+        }
+    }
+
+    // ── Switch language ──
+    function switchLang(lang) {
+        currentLang = lang;
+        localStorage.setItem('calcolabolo-lang', lang);
+        document.documentElement.lang = lang;
+
+        // Update buttons
+        document.getElementById('lang-it').classList.toggle('active', lang === 'it');
+        document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+
+        // Update og tags
+        if (lang === 'it') {
+            document.title = 'CalcolaBolo — Calcolo Bolo Insulinico';
+            document.querySelector('meta[name="description"]').setAttribute('content',
+                'CalcolaBolo — Calcolo avanzato del bolo insulinico con formula Warsaw e FPU. Integrazione Nightscout, promemoria iniezioni, database alimentare.');
+            document.querySelector('meta[property="og:title"]').setAttribute('content', 'CalcolaBolo — Calcolatore Avanzato Bolo Insulinico');
+            document.querySelector('meta[property="og:description"]').setAttribute('content',
+                'Calcolo preciso del bolo con formula Warsaw e Unità Grassi-Proteine. Nightscout CGM, scanner barcode e promemoria iniezioni intelligenti.');
+        } else {
+            document.title = 'CalcolaBolo — Advanced Insulin Bolus Calculator';
+            document.querySelector('meta[name="description"]').setAttribute('content',
+                'CalcolaBolo — Advanced insulin bolus calculator with Warsaw Formula and FPU. Nightscout integration, injection reminders, food database.');
+            document.querySelector('meta[property="og:title"]').setAttribute('content', 'CalcolaBolo — Advanced Insulin Bolus Calculator');
+            document.querySelector('meta[property="og:description"]').setAttribute('content',
+                'Precision bolus dosing with Warsaw Formula and Fat-Protein Units. Nightscout CGM, barcode food lookup, and smart injection reminders.');
+        }
+
+        // Update all [data-i18n] elements
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (i18n[lang] && i18n[lang][key]) {
+                el.innerHTML = i18n[lang][key];
             }
         });
+
+        // Rebuild cards
+        buildFeatureCards();
+        buildStepCards();
+        buildSafetyCards();
+        buildIntegrationCards();
+
+        // Re-observe reveals
+        document.querySelectorAll('.reveal:not(.visible)').forEach(el => revealObserver.observe(el));
+    }
+
+    // ── Init ──
+    document.getElementById('lang-it').addEventListener('click', () => switchLang('it'));
+    document.getElementById('lang-en').addEventListener('click', () => switchLang('en'));
+
+    // Build all card grids
+    buildFeatureCards();
+    buildStepCards();
+    buildSafetyCards();
+    buildIntegrationCards();
+
+    // ── Scroll reveal ──
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ── Navbar scroll effect ──
+    const nav = document.querySelector('nav');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            nav.style.background = 'rgba(255,255,255,0.95)';
+            nav.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)';
+        } else {
+            nav.style.background = 'rgba(255,255,255,0.82)';
+            nav.style.boxShadow = 'none';
+        }
+    });
+
+    // ── Apply saved language ──
+    switchLang(currentLang);
     </script>
 </body>
 </html>
