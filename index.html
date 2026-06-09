@@ -294,7 +294,7 @@
     }
     .btn-outline:hover { background: rgba(11,110,79,0.06); }
 
-    /* Phone mockup */
+    /* Phone mockup — shared frame */
     .phone-mockup-wrapper {
       display: flex;
       justify-content: center;
@@ -312,138 +312,347 @@
     .phone-screen {
       width: 100%;
       height: 100%;
-      background: #fff;
+      background: #fafcfa;
       border-radius: 30px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
-    .phone-notch {
-      width: 90px;
-      height: 28px;
+    /* Samsung-style punch-hole camera — no notch */
+    .phone-punch-hole {
+      position: absolute;
+      top: 13px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px; height: 6px;
       background: #1a1a1a;
-      border-radius: 0 0 18px 18px;
-      margin: 0 auto;
-      position: relative;
-      top: -1px;
-      z-index: 2;
+      border-radius: 50%;
+      z-index: 5;
+      border: 1px solid #2a2a3a;
+      pointer-events: none;
+    }
+
+    /* Status bar */
+    .phone-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 16px 4px;
+      font-size: 0.55rem;
+      font-weight: 600;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+    .phone-status-icons {
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 4px;
     }
-    .phone-notch .cam {
-      width: 8px; height: 8px;
-      background: #2a2a3a;
-      border-radius: 50%;
-      border: 1.5px solid #3a3a4a;
+    .phone-battery {
+      width: 16px; height: 8px;
+      border: 1.3px solid var(--text);
+      border-radius: 2px;
+      padding: 1px;
+      position: relative;
     }
-    .phone-inner {
-      flex: 1;
-      padding: 8px 14px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      background: #fafcfa;
+    .phone-battery::after {
+      content: '';
+      position: absolute;
+      right: -2.5px; top: 1.2px;
+      width: 2px; height: 3px;
+      background: var(--text);
+      border-radius: 0 1px 1px 0;
     }
-    .phone-title {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--primary);
-      text-align: center;
-      letter-spacing: -0.01em;
+    .phone-battery-fill {
+      height: 100%;
+      background: var(--text);
+      border-radius: 1px;
+      width: 75%;
     }
-    .phone-field {
+
+    /* Top App Bar */
+    .phone-top-bar {
       display: flex;
       align-items: center;
-      gap: 6px;
+      padding: 2px 14px 6px;
+      flex-shrink: 0;
+    }
+    .phone-bar-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.01em;
+    }
+
+    /* Scrollable content */
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 14px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .phone-content::-webkit-scrollbar { width: 2px; }
+    .phone-content::-webkit-scrollbar-thumb { background: #d0d8d3; border-radius: 2px; }
+
+    /* Barcode row */
+    .phone-barcode-row {
+      display: flex;
+      gap: 5px;
+      align-items: stretch;
+    }
+    .phone-barcode-row .phone-field { flex: 1; }
+    .phone-scan-btn {
+      width: 30px;
       background: var(--bg-card);
       border: 1px solid #e0e8e3;
       border-radius: 10px;
-      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.72rem;
+      color: var(--secondary);
+      flex-shrink: 0;
+    }
+
+    /* Fields */
+    .phone-field {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg-card);
+      border: 1px solid #e0e8e3;
+      border-radius: 10px;
+      padding: 5px 8px;
     }
     .phone-field-label {
-      font-size: 0.65rem;
+      font-size: 0.58rem;
       font-weight: 600;
       color: var(--secondary);
       white-space: nowrap;
+      min-width: 0;
     }
     .phone-field input {
       flex: 1;
       border: none;
       background: transparent;
       font-family: 'Inter', sans-serif;
-      font-size: 0.72rem;
+      font-size: 0.67rem;
       font-weight: 600;
       color: var(--text);
       outline: none;
       text-align: right;
-      width: 40px;
+      min-width: 0;
     }
     .phone-field-unit {
-      font-size: 0.60rem;
+      font-size: 0.55rem;
       color: var(--text-secondary);
       font-weight: 500;
+      white-space: nowrap;
     }
+    .phone-field-row {
+      display: flex;
+      gap: 5px;
+    }
+    .phone-field-row .phone-field { flex: 1; }
+
+    /* Outline button */
+    .phone-btn-outline {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 5px 8px;
+      background: transparent;
+      border: 1.2px solid var(--primary);
+      border-radius: 10px;
+      color: var(--primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.58rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Chips row */
     .phone-chips {
       display: flex;
-      gap: 4px;
+      gap: 3px;
       flex-wrap: wrap;
     }
     .phone-chip {
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: var(--radius-pill);
-      font-size: 0.60rem;
+      font-size: 0.55rem;
       font-weight: 600;
       border: 1px solid #d8e5dd;
       color: var(--secondary);
       background: var(--bg-card);
+      cursor: default;
     }
     .phone-chip.active {
       background: var(--primary-mint);
       border-color: var(--primary-light);
       color: var(--primary);
     }
+
+    /* Primary button (filled) */
     .phone-btn {
+      width: 100%;
       background: var(--primary);
       color: #fff;
       border: none;
       border-radius: 10px;
-      padding: 9px;
+      padding: 8px;
       font-family: 'Inter', sans-serif;
-      font-size: 0.74rem;
+      font-size: 0.68rem;
       font-weight: 700;
       cursor: pointer;
       text-align: center;
-      transition: background 0.2s;
+      box-shadow: 0 3px 14px rgba(11,110,79,0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
     }
+    .phone-btn.small {
+      width: auto;
+      flex: 1;
+      font-size: 0.58rem;
+      padding: 6px 8px;
+      box-shadow: none;
+    }
+
+    /* Results card */
     .phone-result {
       background: linear-gradient(135deg, #F0FAF5, #E8F6EF);
-      border-radius: 12px;
-      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
       border: 1px solid rgba(11,110,79,0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
     }
     .phone-result-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 3px 0;
+      padding: 1px 0;
     }
     .phone-result-label {
-      font-size: 0.62rem;
+      font-size: 0.55rem;
       color: var(--secondary);
       font-weight: 500;
     }
     .phone-result-val {
-      font-size: 0.72rem;
+      font-size: 0.64rem;
       font-weight: 700;
+      color: var(--primary);
+    }
+    .phone-result-emph {
+      font-size: 0.72rem;
+      font-weight: 800;
       color: var(--primary);
     }
     .phone-result-divider {
       border: none;
       border-top: 1px dashed #c8dcd2;
-      margin: 4px 0;
+      margin: 2px 0;
     }
+
+    /* FPU card inside results */
+    .phone-fpu {
+      background: var(--amber-bg);
+      border-radius: 7px;
+      padding: 5px 8px;
+      border: 1px solid rgba(138,90,0,0.10);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .phone-fpu-meta {
+      font-size: 0.53rem;
+      color: var(--amber);
+      font-weight: 500;
+    }
+    .phone-fpu-val {
+      font-size: 0.60rem;
+      font-weight: 700;
+      color: var(--amber);
+    }
+    .phone-dose-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.52rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .phone-dose-item.future { color: var(--text-secondary); font-weight: 400; }
+    .phone-dose-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+    .phone-dose-item.future .phone-dose-dot { background: #c0d0c6; }
+
+    /* Warning card */
+    .phone-warn-card {
+      background: #FCECEE;
+      border: 1px solid rgba(179,38,30,0.12);
+      border-radius: 7px;
+      padding: 4px 7px;
+      font-size: 0.52rem;
+      color: var(--error);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .phone-info-card {
+      background: #f0f2f5;
+      border: 1px solid #d8dce2;
+      border-radius: 7px;
+      padding: 4px 7px;
+      font-size: 0.52rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Action row */
+    .phone-action-row {
+      display: flex;
+      gap: 5px;
+    }
+
+    /* Bottom nav */
+    .phone-bottom-nav {
+      display: flex;
+      border-top: 1px solid #e0e8e3;
+      background: var(--bg-card);
+      flex-shrink: 0;
+    }
+    .phone-nav-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      padding: 5px 0 7px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+    .phone-nav-tab.active { color: var(--primary); }
+    .phone-nav-tab .nav-icon { font-size: 0.95rem; line-height: 1; }
+    .phone-nav-tab .nav-label { font-size: 0.50rem; font-weight: 600; }
+    .phone-nav-tab.active .nav-label { font-weight: 700; }
 
     /* ============================== SECTION COMMON ============================== */
     section {
@@ -783,8 +992,7 @@
         padding: 10px;
       }
       .phone-screen { border-radius: 26px; }
-      .phone-notch { width: 70px; height: 24px; }
-      .phone-inner { padding: 6px 10px 10px; gap: 6px; }
+      .phone-punch-hole { top: 11px; width: 5px; height: 5px; }
       .hero-content h1 { font-size: clamp(2rem, 7vw, 2.6rem); }
       .section-title { font-size: clamp(1.6rem, 6vw, 2rem); }
       .footer-links { gap: 20px; }
@@ -945,59 +1153,136 @@
       <div class="phone-mockup-wrapper reveal">
         <div class="phone-frame">
           <div class="phone-screen">
-            <div class="phone-notch" aria-hidden="true"><div class="cam"></div></div>
-            <div class="phone-inner">
-              <div class="phone-title">CalcolaBolo</div>
+            <div class="phone-punch-hole" aria-hidden="true"></div>
 
+            <!-- Status bar -->
+            <div class="phone-status-bar">
+              <span data-i18n="phone.statusTime">9:41</span>
+              <div class="phone-status-icons">
+                <svg width="11" height="7" viewBox="0 0 11 7"><rect x="0" y="5.5" width="1.5" height="1.5" rx="0.4" fill="currentColor"></rect><rect x="2" y="4.5" width="1.5" height="2.5" rx="0.4" fill="currentColor"></rect><rect x="4" y="3" width="1.5" height="4" rx="0.4" fill="currentColor"></rect><rect x="6" y="1.5" width="1.5" height="5.5" rx="0.4" fill="currentColor"></rect><rect x="8" y="0" width="1.5" height="7" rx="0.4" fill="currentColor"></rect></svg>
+                <span style="font-size:0.48rem;font-weight:700;">WiFi</span>
+                <div class="phone-battery"><div class="phone-battery-fill"></div></div>
+              </div>
+            </div>
+
+            <!-- Top App Bar -->
+            <div class="phone-top-bar">
+              <span class="phone-bar-title" data-i18n="phone.topBar">Bolus calculator</span>
+            </div>
+
+            <!-- Scrollable content -->
+            <div class="phone-content">
+              <!-- Barcode row -->
+              <div class="phone-barcode-row">
+                <div class="phone-field">
+                  <span class="phone-field-label" data-i18n="phone.barcode">Barcode</span>
+                  <input type="text" placeholder="—" readonly="">
+                </div>
+                <div class="phone-field">
+                  <span class="phone-field-label" data-i18n="phone.grams">Grams</span>
+                  <input type="text" placeholder="100" readonly="">
+                  <span class="phone-field-unit">g</span>
+                </div>
+                <div class="phone-scan-btn" aria-label="Scan" tabindex="-1">📷</div>
+              </div>
+
+              <!-- Carbs -->
               <div class="phone-field">
                 <span class="phone-field-label" data-i18n="phone.carbs">Carbs</span>
-                <input type="text" value="65" readonly="" aria-label="Carbohydrates">
+                <input type="text" value="65" readonly="">
                 <span class="phone-field-unit">g</span>
               </div>
-              <div class="phone-field">
-                <span class="phone-field-label" data-i18n="phone.fat">Fat</span>
-                <input type="text" value="32" readonly="" aria-label="Fat">
-                <span class="phone-field-unit">g</span>
+
+              <!-- Fat + Protein -->
+              <div class="phone-field-row">
+                <div class="phone-field">
+                  <span class="phone-field-label" data-i18n="phone.fat">Fat</span>
+                  <input type="text" value="32" readonly="">
+                  <span class="phone-field-unit">g</span>
+                </div>
+                <div class="phone-field">
+                  <span class="phone-field-label" data-i18n="phone.protein">Protein</span>
+                  <input type="text" value="28" readonly="">
+                  <span class="phone-field-unit">g</span>
+                </div>
               </div>
-              <div class="phone-field">
-                <span class="phone-field-label" data-i18n="phone.protein">Protein</span>
-                <input type="text" value="28" readonly="" aria-label="Protein">
-                <span class="phone-field-unit">g</span>
-              </div>
+
+              <!-- Glucose -->
               <div class="phone-field">
                 <span class="phone-field-label" data-i18n="phone.glucose">Glucose</span>
-                <input type="text" value="162" readonly="" aria-label="Glucose">
+                <input type="text" value="162" readonly="">
                 <span class="phone-field-unit">mg/dL</span>
               </div>
 
+              <!-- CGM button -->
+              <button class="phone-btn-outline" tabindex="-1" data-i18n="phone.cgm" data-od-id="path-1-1-1-0-0-3-4">Read from CGM</button>
+
+              <!-- Trend chips -->
               <div class="phone-chips">
-                <span class="phone-chip active">FPU</span>
-                <span class="phone-chip" data-i18n="phone.pen">Pen 0.5U</span>
-                <span class="phone-chip">60min</span>
+                <span class="phone-chip" data-i18n="phone.trendDd">↓↓ Falling</span>
+                <span class="phone-chip" data-i18n="phone.trendD">↓ Falling</span>
+                <span class="phone-chip active" data-i18n="phone.trendStable">→ Stable</span>
+                <span class="phone-chip" data-i18n="phone.trendU">↑ Rising</span>
+                <span class="phone-chip" data-i18n="phone.trendUu">↑↑ Rapid</span>
               </div>
 
-              <button class="phone-btn" tabindex="-1" data-i18n="phone.calculate" data-od-id="path-1-1-1-0-0-1-6">Calculate</button>
+              <!-- Calculate button -->
+              <button class="phone-btn" tabindex="-1" data-i18n="phone.calculate" data-od-id="path-1-1-1-0-0-3-6">Calculate</button>
 
+              <!-- Results card -->
               <div class="phone-result">
                 <div class="phone-result-row">
+                  <span class="phone-result-label" data-i18n="phone.carbBolus">Carb bolus</span>
+                  <span class="phone-result-val">2.8 U</span>
+                </div>
+                <div class="phone-result-row">
+                  <span class="phone-result-label" data-i18n="phone.correction">Correction</span>
+                  <span class="phone-result-val">1.2 U</span>
+                </div>
+                <div class="phone-result-row">
+                  <span class="phone-result-label" data-i18n="phone.iob">IOB</span>
+                  <span class="phone-result-val">0.5 U</span>
+                </div>
+                <hr class="phone-result-divider">
+                <div class="phone-result-row">
                   <span class="phone-result-label" data-i18n="phone.immediate">Immediate bolus</span>
-                  <span class="phone-result-val">4.5 U</span>
+                  <span class="phone-result-emph">3.5 U</span>
+                </div>
+                <hr class="phone-result-divider">
+                <!-- FPU block -->
+                <div class="phone-fpu">
+                  <div class="phone-fpu-meta">kcal: 425 · FPU: 4.2 · <span data-i18n="phone.fpuDuration">Duration</span>: 5h</div>
+                  <div class="phone-fpu-val" data-i18n="phone.extendedInsulin">Extended insulin: 4.2 U</div>
+                  <div style="margin-top:2px;display:flex;flex-direction:column;gap:1px;">
+                    <div class="phone-dose-item"><span class="phone-dose-dot"></span> 1/3 — 0.8 U 12:30</div>
+                    <div class="phone-dose-item future"><span class="phone-dose-dot"></span> 2/3 — 0.8 U 13:30</div>
+                    <div class="phone-dose-item future"><span class="phone-dose-dot"></span> 3/3 — 0.8 U 14:30</div>
+                  </div>
                 </div>
                 <hr class="phone-result-divider">
                 <div class="phone-result-row">
-                  <span class="phone-result-label" data-i18n="phone.extended">Extended bolus</span>
-                  <span class="phone-result-val">3.2 U</span>
+                  <span class="phone-result-label" data-i18n="phone.totalInsulin">Total insulin</span>
+                  <span class="phone-result-emph">7.7 U</span>
                 </div>
-                <hr class="phone-result-divider">
-                <div class="phone-result-row">
-                  <span class="phone-result-label" data-i18n="phone.injections">Injections</span>
-                  <span class="phone-result-val" data-i18n="phone.doses">3 doses</span>
-                </div>
-                <hr class="phone-result-divider">
-                <div class="phone-result-row">
-                  <span class="phone-result-label" data-i18n="phone.duration">Duration</span>
-                  <span class="phone-result-val">4h</span>
-                </div>
+                <div class="phone-warn-card">⚠ <span data-i18n="phone.maxBolus">Max bolus exceeded (7.0 U)</span></div>
+              </div>
+
+              <!-- Action row -->
+              <div class="phone-action-row">
+                <button class="phone-btn-outline" style="flex:1;font-size:0.52rem;" tabindex="-1" data-i18n="phone.doneDose" data-od-id="path-1-1-1-0-0-3-8-0">Dose taken</button>
+                <button class="phone-btn small" tabindex="-1" data-i18n="phone.scheduleReminder" data-od-id="path-1-1-1-0-0-3-8-1">Schedule</button>
+              </div>
+            </div>
+
+            <!-- Bottom nav -->
+            <div class="phone-bottom-nav">
+              <div class="phone-nav-tab active">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label" data-i18n="phone.navCalc">Calc</span>
+              </div>
+              <div class="phone-nav-tab">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label" data-i18n="phone.navProfile">Profile</span>
               </div>
             </div>
           </div>
@@ -1199,17 +1484,33 @@
         'hero.cta': "Scarica l'App",
         'hero.ctaOutline': "Esplora le Funzionalità",
 
+        'phone.statusTime': "9:41",
+        'phone.topBar': "Calcolatore di bolo",
+        'phone.barcode': "Barcode",
+        'phone.grams': "Grammi",
         'phone.carbs': "Carboidrati",
         'phone.fat': "Grassi",
         'phone.protein': "Proteine",
         'phone.glucose': "Glicemia",
-        'phone.pen': "Pen 0.5U",
+        'phone.cgm': "Leggi da CGM",
+        'phone.trendDd': "↓↓ In calo",
+        'phone.trendD': "↓ In calo",
+        'phone.trendStable': "→ Stabile",
+        'phone.trendU': "↑ In rialzo",
+        'phone.trendUu': "↑↑ Rapido",
         'phone.calculate': "Calcola",
+        'phone.carbBolus': "Bolo carb",
+        'phone.correction': "Correzione",
+        'phone.iob': "IOB",
         'phone.immediate': "Bolo immediato",
-        'phone.extended': "Bolo esteso",
-        'phone.injections': "Iniezioni",
-        'phone.doses': "3 dosi",
-        'phone.duration': "Durata",
+        'phone.fpuDuration': "Durata",
+        'phone.extendedInsulin': "Insulina estesa: 4.2 U",
+        'phone.totalInsulin': "Insulina totale",
+        'phone.maxBolus': "Superato bolo massimo (7.0 U)",
+        'phone.doneDose': "Dose assunta",
+        'phone.scheduleReminder': "Programma",
+        'phone.navCalc': "Calcolo",
+        'phone.navProfile': "Profilo",
 
         'features.label': "Funzionalità",
         'features.title': "Tutto ciò che serve per un dosaggio di precisione",
@@ -1300,17 +1601,33 @@
         'hero.cta': "Get the App",
         'hero.ctaOutline': "Explore Features",
 
+        'phone.statusTime': "9:41",
+        'phone.topBar': "Bolus calculator",
+        'phone.barcode': "Barcode",
+        'phone.grams': "Grams",
         'phone.carbs': "Carbs",
         'phone.fat': "Fat",
         'phone.protein': "Protein",
         'phone.glucose': "Glucose",
-        'phone.pen': "Pen 0.5U",
+        'phone.cgm': "Read from CGM",
+        'phone.trendDd': "↓↓ Falling",
+        'phone.trendD': "↓ Falling",
+        'phone.trendStable': "→ Stable",
+        'phone.trendU': "↑ Rising",
+        'phone.trendUu': "↑↑ Rapid",
         'phone.calculate': "Calculate",
+        'phone.carbBolus': "Carb bolus",
+        'phone.correction': "Correction",
+        'phone.iob': "IOB",
         'phone.immediate': "Immediate bolus",
-        'phone.extended': "Extended bolus",
-        'phone.injections': "Injections",
-        'phone.doses': "3 doses",
-        'phone.duration': "Duration",
+        'phone.fpuDuration': "Duration",
+        'phone.extendedInsulin': "Extended insulin: 4.2 U",
+        'phone.totalInsulin': "Total insulin",
+        'phone.maxBolus': "Max bolus exceeded (7.0 U)",
+        'phone.doneDose': "Dose taken",
+        'phone.scheduleReminder': "Schedule",
+        'phone.navCalc': "Calc",
+        'phone.navProfile': "Profile",
 
         'features.label': "Features",
         'features.title': "Everything you need for precision dosing",
